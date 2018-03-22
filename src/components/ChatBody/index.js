@@ -12,20 +12,7 @@ const styles = {
 };
 /* Component */
 const ChatBody = (props)=>{
-    const messages = [
-        {
-            content: 'aaa',
-            timestamp: 'yyyy-mm-dd hh:mm:ss'
-        },
-        {
-            content: 'bbb',
-            timestamp: 'yyyy-mm-dd hh:mm:ss'
-        },
-        {
-            content: 'ccc',
-            timestamp: 'yyyy-mm-dd hh:mm:ss'
-        }
-    ];
+    const { messages }= props;
     return (
         <div style={styles.root}>
             <h3>"ChatBody"</h3>

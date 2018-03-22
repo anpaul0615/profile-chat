@@ -9,11 +9,16 @@ const styles = {
 };
 /* Component */
 const ChatHeader = (props)=>{
+    const { handleEnterConfigClick } = props;
     return (
         <div style={styles.root}>
             <h3>"ChatHeader"</h3>
-            <button>ConfigButton</button>
-            <button>CloseButton</button>
+            <button onClick={()=>handleEnterConfigClick()}>
+                EnterConfig
+            </button>
+            <button>
+                CloseChatting
+            </button>
         </div>
     );
 };
