@@ -38,14 +38,18 @@ class App extends Component {
             ]
         };
     }
-    handleEnterConfigClick = ()=>{
-        console.log('handleEnterConfigClick is called..!');
+    handleClickConfigButton = ()=>{
+        console.log('handleClickConfigButton is called..!');
         this.setState({
             configMode: true
         });
     }
-    handleExitConfigClick = ()=>{
-        console.log('handleExitConfigClick is called..!');
+    handleClickExitButton = ()=>{
+        console.log('handleClickExitButton is called..!');
+        alert('exit!');
+    }
+    handleClickCloseConfigButton = ()=>{
+        console.log('handleClickCloseConfigButton is called..!');
         this.setState({
             configMode: false
         });
@@ -58,11 +62,12 @@ class App extends Component {
                     this.state.configMode
                         ?
                         <ChatConfiguration
-                            handleExitConfigClick={this.handleExitConfigClick} />
+                            handleClickCloseConfigButton={this.handleClickCloseConfigButton} />
                         :
                         [
                             <ChatHeader
-                                handleEnterConfigClick={this.handleEnterConfigClick} />,
+                                handleClickConfigButton={this.handleClickConfigButton}
+                                handleClickExitButton={this.handleClickExitButton} />,
                             <ChatBody
                                 messages={this.state.messages} />
                         ]

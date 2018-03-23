@@ -12,12 +12,12 @@ const styles = {
 };
 /* Component */
 const ChatConfiguration = (props)=>{
-    const { handleExitConfigClick } = props;
+    const { handleClickCloseConfigButton } = props;
     return (
         <div style={styles.root}>
             <h3>"ChatConfiguration"</h3>
-            <button onClick={()=>handleExitConfigClick()}>
-                ExitConfig
+            <button onClick={()=>handleClickCloseConfigButton()}>
+                CloseConfig
             </button>
             <UserDataForm/>
         </div>
