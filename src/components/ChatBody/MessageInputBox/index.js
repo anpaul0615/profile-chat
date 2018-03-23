@@ -1,13 +1,9 @@
 import React from 'react';
+import styled from "styled-components";
 
 
 /* Style */
 const styles = {
-    root: {
-        width: '100%',
-        border: 'dotted 1px gray',
-        minHeight: '54px'
-    },
     inputBox: {
         width: 'calc(100% - 80px)',
         height: '40px'
@@ -17,16 +13,21 @@ const styles = {
         height: '40px'
     }
 };
+/* Style-Wrapper */
+const MessageInputBoxWrapper = styled.div`
+    width: 100%;
+    min-height: 54px;
+`;
 /* Component */
 const MessageInputBox = (props)=>{
     return (
-        <div style={styles.root}>
+        <MessageInputBoxWrapper>
             <input style={styles.inputBox}
                    placeholder={"메시지를 입력해주세요"} />
             <button style={styles.sendButton}>
                 전송
             </button>
-        </div>
+        </MessageInputBoxWrapper>
     );
 };
 export default MessageInputBox;
