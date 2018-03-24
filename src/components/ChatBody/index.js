@@ -12,11 +12,17 @@ const ChatBodyWrapper = styled.div`
 `;
 /* Component */
 const ChatBody = (props)=>{
-    const { messages }= props;
+    const {
+        messages,
+        handleChangeInputText,
+        handleClickMessageSendButton
+    }= props;
     return (
         <ChatBodyWrapper>
             <MessageHistory messages={messages}/>
-            <MessageInputBox/>
+            <MessageInputBox
+                handleChangeInputText={handleChangeInputText}
+                handleClickMessageSendButton={handleClickMessageSendButton}/>
         </ChatBodyWrapper>
     );
 };

@@ -1,32 +1,28 @@
 import React from 'react';
+import InputBox from './InputBox';
+import SendButton from './SendButton';
 import styled from "styled-components";
 
 
-/* Style */
-const styles = {
-    inputBox: {
-        width: 'calc(100% - 80px)',
-        height: '40px'
-    },
-    sendButton: {
-        width: '60px',
-        height: '40px'
-    }
-};
 /* Style-Wrapper */
 const MessageInputBoxWrapper = styled.div`
     width: 100%;
-    min-height: 54px;
+    height: 56px;
+    position: relative;
+    display: flex;
+    align-items: center;
+    border-top: 1px solid rgba(81,99,120,0.2);
 `;
 /* Component */
 const MessageInputBox = (props)=>{
+    const { 
+        handleChangeInputText,
+        handleClickMessageSendButton
+    } = props;
     return (
         <MessageInputBoxWrapper>
-            <input style={styles.inputBox}
-                   placeholder={"메시지를 입력해주세요"} />
-            <button style={styles.sendButton}>
-                전송
-            </button>
+            <InputBox handleChangeInputText={handleChangeInputText} />
+            <SendButton handleClickMessageSendButton={handleClickMessageSendButton} />
         </MessageInputBoxWrapper>
     );
 };

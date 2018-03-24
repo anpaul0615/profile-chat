@@ -54,6 +54,15 @@ class App extends Component {
             configMode: false
         });
     }
+    handleChangeInputText = (event)=>{
+        console.log('handleChangeInputText is called..!');
+        console.log(event.target.value);
+        // alert('change!');
+    }
+    handleClickMessageSendButton = ()=>{
+        console.log('handleClickMessageSendButton is called..!');
+        alert('click!');
+    }
     render() {
         console.log(this.state.configMode);
         return (
@@ -69,7 +78,9 @@ class App extends Component {
                                 handleClickOpenConfigButton={this.handleClickOpenConfigButton}
                                 handleClickExitButton={this.handleClickExitButton} />,
                             <ChatBody
-                                messages={this.state.messages} />
+                                messages={this.state.messages}
+                                handleChangeInputText={this.handleChangeInputText}
+                                handleClickMessageSendButton={this.handleClickMessageSendButton} />
                         ]
                 }
 
