@@ -25,12 +25,12 @@ position: relative;
 /* Component */
 const ChatHeader = (props)=>{
     const {
-        handleClickConfigButton,
+        handleClickOpenConfigButton,
         handleClickExitButton,
     } = props;
     return (
         <ChatHeaderWrapper>
-            <ConfigButton handleClickConfigButton={handleClickConfigButton} />
+            <ConfigButton handleClickOpenConfigButton={handleClickOpenConfigButton} />
             "ChatHeader"
             <ExitButton handleClickExitButton={handleClickExitButton} />
         </ChatHeaderWrapper>

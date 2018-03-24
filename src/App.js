@@ -38,8 +38,8 @@ class App extends Component {
             ]
         };
     }
-    handleClickConfigButton = ()=>{
-        console.log('handleClickConfigButton is called..!');
+    handleClickOpenConfigButton = ()=>{
+        console.log('handleClickOpenConfigButton is called..!');
         this.setState({
             configMode: true
         });
@@ -66,7 +66,7 @@ class App extends Component {
                         :
                         [
                             <ChatHeader
-                                handleClickConfigButton={this.handleClickConfigButton}
+                                handleClickOpenConfigButton={this.handleClickOpenConfigButton}
                                 handleClickExitButton={this.handleClickExitButton} />,
                             <ChatBody
                                 messages={this.state.messages} />

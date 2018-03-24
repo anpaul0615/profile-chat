@@ -3,7 +3,7 @@ import styled from "styled-components";
 
 
 /* Style-Wrapper */
-const ExitButtonWrapper = styled.div`
+const ConfigButtonWrapper = styled.div`
     position: absolute;
     top: 0;
     left: 0;
@@ -25,8 +25,8 @@ const ExitButtonWrapper = styled.div`
     }
 `;
 /* Component */
-const ExitButton = (props)=>{
-    const { handleClickConfigButton } = props;
-    return <ExitButtonWrapper onClick={()=>handleClickConfigButton()} />;
+const ConfigButton = (props)=>{
+    const { handleClickOpenConfigButton } = props;
+    return <ConfigButtonWrapper onClick={()=>handleClickOpenConfigButton()} />;
 };
-export default ExitButton;
+export default ConfigButton;
