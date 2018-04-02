@@ -2,13 +2,14 @@ import React, {Component} from 'react';
 import './App.css';
 import ChatHeader from './components/ChatHeader';
 import ChatBody from './components/ChatBody';
-import ChatConfiguration from "./components/ChatConfiguration";
+import ChatConfigHeader from "./components/ChatConfigHeader";
+import ChatConfigBody from "./components/ChatConfigBody";
 
 class App extends Component {
     constructor(){
         super();
         this.state = {
-            configMode: false,
+            isConfigMode: false,
             messages: [
                 {
                     user: 'paul',
@@ -41,7 +42,7 @@ class App extends Component {
     handleClickOpenConfigButton = ()=>{
         console.log('handleClickOpenConfigButton is called..!');
         this.setState({
-            configMode: true
+            isConfigMode: true
         });
     }
     handleClickExitButton = ()=>{
@@ -51,8 +52,23 @@ class App extends Component {
     handleClickCloseConfigButton = ()=>{
         console.log('handleClickCloseConfigButton is called..!');
         this.setState({
-            configMode: false
+            isConfigMode: false
         });
+    }
+    handleChangeUserAccessCode = (event)=>{
+        console.log('handleChangeUserAccessCode is called..!');
+        console.log(event.target.value);
+        // alert('change!');
+    }
+    handleChangeUserName = (event)=>{
+        console.log('handleChangeUserName is called..!');
+        console.log(event.target.value);
+        // alert('change!');
+    }
+    handleChangeUserContact = (event)=>{
+        console.log('handleChangeUserContact is called..!');
+        console.log(event.target.value);
+        // alert('change!');
     }
     handleChangeInputText = (event)=>{
         console.log('handleChangeInputText is called..!');
@@ -64,20 +80,31 @@ class App extends Component {
         alert('click!');
     }
     render() {
-        console.log(this.state.configMode);
+        const { isConfigMode } = this.state;
+        console.log(isConfigMode);
         return (
             <div className="App">
                 {
-                    this.state.configMode
+                    isConfigMode
                         ?
-                        <ChatConfiguration
-                            handleClickCloseConfigButton={this.handleClickCloseConfigButton} />
+                        [
+                            <ChatConfigHeader
+                                key={'ChatConfigHeader'}
+                                handleClickCloseConfigButton={this.handleClickCloseConfigButton} />,
+                            <ChatConfigBody
+                                key={'ChatConfigBody'}
+                                handleChangeUserAccessCode={this.handleChangeUserAccessCode} 
+                                handleChangeUserName={this.handleChangeUserName} 
+                                handleChangeUserContact={this.handleChangeUserContact} />
+                        ]
                         :
                         [
                             <ChatHeader
+                                key={'ChatHeader'}
                                 handleClickOpenConfigButton={this.handleClickOpenConfigButton}
                                 handleClickExitButton={this.handleClickExitButton} />,
                             <ChatBody
+                                key={'ChatBody'}
                                 messages={this.state.messages}
                                 handleChangeInputText={this.handleChangeInputText}
                                 handleClickMessageSendButton={this.handleClickMessageSendButton} />
