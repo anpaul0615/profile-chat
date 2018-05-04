@@ -6,7 +6,7 @@ import styled from "styled-components";
 
 /* Style-Wrapper */
 const ChatHeaderWrapper = styled.div`
-position: relative;
+    position: relative;
     height: 60px;
     display: flex;
     align-items: center;
