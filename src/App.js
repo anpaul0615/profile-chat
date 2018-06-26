@@ -47,7 +47,7 @@ class App extends Component {
     }
     handleClickExitButton = ()=>{
         console.log('handleClickExitButton is called..!');
-        alert('exit!');
+        window.parent.postMessage('chat-off','*');
     }
     handleClickCloseConfigButton = ()=>{
         console.log('handleClickCloseConfigButton is called..!');
@@ -81,7 +81,6 @@ class App extends Component {
     }
     render() {
         const { isConfigMode } = this.state;
-        console.log(isConfigMode);
         return (
             <div className="App">
                 {
