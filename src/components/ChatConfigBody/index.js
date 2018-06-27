@@ -8,6 +8,7 @@ const ChatConfigBodyWrapper = styled.form`
     width: 100%;
     height: calc(100% - 60px);
     overflow: hidden;
+    background-color: #FFFFFF;
 `;
 /* Component */
 const ChatConfigBody = (props)=>{
