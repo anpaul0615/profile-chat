@@ -19,7 +19,7 @@ const CloseButtonWrapper = styled.div`
         display: block;
         width: 24px;
         height: 24px;
-        background-image: url(/img/close-button.png);
+        background-image: url(./img/close-button.png);
         background-size: cover;
         opacity: 0.6;
     }
