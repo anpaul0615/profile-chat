@@ -110,33 +110,13 @@ class App extends Component {
             isConfigMode: false
         });
     }
-    handleChangeUserAccessCode = (event)=>{
-        console.log('handleChangeUserAccessCode is called..!');
-        // console.log(event.target.value);
-        // alert('change!');
-        
-        if (this.state.configMode.isFetching) {
-            return event.preventDefault();
-        }
-
+    handleChangeUserAccessCode = (userAccessCode)=>{
         if (this.inputFetchingTimer) {
             clearTimeout(this.inputFetchingTimer);
         }
-        const accessCode = event.target.value;
         this.inputFetchingTimer = setTimeout(()=>{
-            this.getUserInfo(accessCode);
+            this.getUserInfo(userAccessCode);
         }, 1000);
-
-    }
-    handleChangeUserName = (event)=>{
-        console.log('handleChangeUserName is called..!');
-        console.log(event.target.value);
-        // alert('change!');
-    }
-    handleChangeUserContact = (event)=>{
-        console.log('handleChangeUserContact is called..!');
-        console.log(event.target.value);
-        // alert('change!');
     }
     handleChangeInputText = (event)=>{
         console.log('handleChangeInputText is called..!');
@@ -150,6 +130,7 @@ class App extends Component {
 
     render() {
         const { isConfigMode } = this.state;
+        const { userName, userContact } = this.state.configMode;
         return (
             <div className="App">
                 {
@@ -161,6 +142,8 @@ class App extends Component {
                                 handleClickCloseConfigButton={this.handleClickCloseConfigButton} />,
                             <ChatConfigBody
                                 key={'ChatConfigBody'}
+                                userName={userName}
+                                userContact={userContact}
                                 handleChangeUserAccessCode={this.handleChangeUserAccessCode} 
                                 handleChangeUserName={this.handleChangeUserName} 
                                 handleChangeUserContact={this.handleChangeUserContact} />
