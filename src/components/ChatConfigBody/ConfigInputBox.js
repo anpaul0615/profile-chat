@@ -33,13 +33,17 @@ const InputBox = styled.input`
 `;
 /* Component */
 const ConfigInputBox = (props)=>{
-    const { labelText, isRequired, onChange } = props;
+    const { labelText, value, isReadOnly, placeholder, handleOnChange } = props;
     return (
         <InputBoxWrapper>
             <Label>{labelText + ' : '}</Label>
-            <InputBox 
-                placeholder={ isRequired ? '(required)' : '(optional)' } 
-                onChange={onChange} />
+            <InputBox
+                value={value}
+                readOnly={ isReadOnly || false }
+                placeholder={ placeholder || '' }
+                onChange={(event)=>{
+                    handleOnChange(event.target.value);
+                }} />
         </InputBoxWrapper>
     );
 };

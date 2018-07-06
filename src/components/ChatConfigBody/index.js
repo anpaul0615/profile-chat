@@ -1,5 +1,6 @@
 import React from 'react';
-import InputBox from './InputBox';
+import ConfigInputBox from './ConfigInputBox';
+import AccessCodeRequestButton from './AccessCodeRequestButton';
 import styled from "styled-components";
 
 
@@ -13,21 +14,26 @@ const ChatConfigBodyWrapper = styled.form`
 /* Component */
 const ChatConfigBody = (props)=>{
     const {
+        userName, userContact,
         handleChangeUserAccessCode,
-        handleChangeUserName,
-        handleChangeUserContact
+        handleClickRequestButton
      } = props;
     return (
         <ChatConfigBodyWrapper>
-            <InputBox 
+            <ConfigInputBox
                 labelText={'Access Code'}
-                onChange={handleChangeUserAccessCode} isRequired/>
-            <InputBox
+                handleOnChange={handleChangeUserAccessCode}
+                placeholder='(type-your-access-code)' />
+            <ConfigInputBox
                 labelText={'Name'}
-                onChange={handleChangeUserName} />
-            <InputBox 
+                value={userName}
+                isReadOnly />
+            <ConfigInputBox
                 labelText={'Contact'}
-                onChange={handleChangeUserContact} />
+                value={userContact}
+                isReadOnly />
+            <AccessCodeRequestButton
+                handleOnClick={handleClickRequestButton} />
         </ChatConfigBodyWrapper>
     );
 };

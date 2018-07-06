@@ -110,34 +110,49 @@ class App extends Component {
             isConfigMode: false
         });
     }
-    handleChangeUserAccessCode = (event)=>{
-        console.log('handleChangeUserAccessCode is called..!');
-        // console.log(event.target.value);
-        // alert('change!');
-        
-        if (this.state.configMode.isFetching) {
-            return event.preventDefault();
-        }
-
+    handleChangeUserAccessCode = (userAccessCode)=>{
         if (this.inputFetchingTimer) {
             clearTimeout(this.inputFetchingTimer);
         }
-        const accessCode = event.target.value;
         this.inputFetchingTimer = setTimeout(()=>{
-            this.getUserInfo(accessCode);
+            this.getUserInfo(userAccessCode);
         }, 1000);
+    }
+    handleClickRequestButton = async ()=>{
+        const userName = window.prompt('Please enter your name: (ex. Paul An)', '');
+        if (!userName) return;
 
+        const userContact = window.prompt('Please enter your contact: (ex. anpaul0615@gmail.com)', '');
+        if (!userContact) return;
+
+        const isConfirm = window.confirm('Request access-code now?');
+        if (isConfirm) {
+            try {
+                await Axios({
+                    url: '/auth/users',
+                    method: 'POST',
+                    baseURL: APIConfig.endpoint,
+                    data: {
+                        userName,
+                        userContact
+                    }
+                }).then(result=>result.data);
+
+            } catch(e) {
+                const { userAccessCode, userName, userContact } = e.response.data.data;
+                if (userAccessCode) {
+                    let msg = 'Already registered..!\n\n';
+                    msg += `Access Code : ${userAccessCode}\n`;
+                    msg += `Name : ${userName}\n`;
+                    msg += `Contact : ${userContact}\n`;
+                    alert(msg);
+                } else {
+                    alert('Unexpected Error..!');
+                }
+            }
+        }
     }
-    handleChangeUserName = (event)=>{
-        console.log('handleChangeUserName is called..!');
-        console.log(event.target.value);
-        // alert('change!');
-    }
-    handleChangeUserContact = (event)=>{
-        console.log('handleChangeUserContact is called..!');
-        console.log(event.target.value);
-        // alert('change!');
-    }
+
     handleChangeInputText = (event)=>{
         console.log('handleChangeInputText is called..!');
         console.log(event.target.value);
@@ -150,6 +165,7 @@ class App extends Component {
 
     render() {
         const { isConfigMode } = this.state;
+        const { userName, userContact } = this.state.configMode;
         return (
             <div className="App">
                 {
@@ -161,9 +177,12 @@ class App extends Component {
                                 handleClickCloseConfigButton={this.handleClickCloseConfigButton} />,
                             <ChatConfigBody
                                 key={'ChatConfigBody'}
-                                handleChangeUserAccessCode={this.handleChangeUserAccessCode} 
-                                handleChangeUserName={this.handleChangeUserName} 
-                                handleChangeUserContact={this.handleChangeUserContact} />
+                                userName={userName}
+                                userContact={userContact}
+                                handleChangeUserAccessCode={this.handleChangeUserAccessCode}
+                                handleChangeUserName={this.handleChangeUserName}
+                                handleChangeUserContact={this.handleChangeUserContact}
+                                handleClickRequestButton={this.handleClickRequestButton} />
                         ]
                         :
                         [
