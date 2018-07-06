@@ -118,6 +118,41 @@ class App extends Component {
             this.getUserInfo(userAccessCode);
         }, 1000);
     }
+    handleClickRequestButton = async ()=>{
+        const userName = window.prompt('Please enter your name: (ex. Paul An)', '');
+        if (!userName) return;
+
+        const userContact = window.prompt('Please enter your contact: (ex. anpaul0615@gmail.com)', '');
+        if (!userContact) return;
+
+        const isConfirm = window.confirm('Request access-code now?');
+        if (isConfirm) {
+            try {
+                await Axios({
+                    url: '/auth/users',
+                    method: 'POST',
+                    baseURL: APIConfig.endpoint,
+                    data: {
+                        userName,
+                        userContact
+                    }
+                }).then(result=>result.data);
+
+            } catch(e) {
+                const { userAccessCode, userName, userContact } = e.response.data.data;
+                if (userAccessCode) {
+                    let msg = 'Already registered..!\n\n';
+                    msg += `Access Code : ${userAccessCode}\n`;
+                    msg += `Name : ${userName}\n`;
+                    msg += `Contact : ${userContact}\n`;
+                    alert(msg);
+                } else {
+                    alert('Unexpected Error..!');
+                }
+            }
+        }
+    }
+
     handleChangeInputText = (event)=>{
         console.log('handleChangeInputText is called..!');
         console.log(event.target.value);
@@ -144,9 +179,10 @@ class App extends Component {
                                 key={'ChatConfigBody'}
                                 userName={userName}
                                 userContact={userContact}
-                                handleChangeUserAccessCode={this.handleChangeUserAccessCode} 
-                                handleChangeUserName={this.handleChangeUserName} 
-                                handleChangeUserContact={this.handleChangeUserContact} />
+                                handleChangeUserAccessCode={this.handleChangeUserAccessCode}
+                                handleChangeUserName={this.handleChangeUserName}
+                                handleChangeUserContact={this.handleChangeUserContact}
+                                handleClickRequestButton={this.handleClickRequestButton} />
                         ]
                         :
                         [

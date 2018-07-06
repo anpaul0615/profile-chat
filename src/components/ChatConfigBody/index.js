@@ -1,5 +1,6 @@
 import React from 'react';
 import ConfigInputBox from './ConfigInputBox';
+import AccessCodeRequestButton from './AccessCodeRequestButton';
 import styled from "styled-components";
 
 
@@ -14,7 +15,8 @@ const ChatConfigBodyWrapper = styled.form`
 const ChatConfigBody = (props)=>{
     const {
         userName, userContact,
-        handleChangeUserAccessCode
+        handleChangeUserAccessCode,
+        handleClickRequestButton
      } = props;
     return (
         <ChatConfigBodyWrapper>
@@ -30,6 +32,8 @@ const ChatConfigBody = (props)=>{
                 labelText={'Contact'}
                 value={userContact}
                 isReadOnly />
+            <AccessCodeRequestButton
+                handleOnClick={handleClickRequestButton} />
         </ChatConfigBodyWrapper>
     );
 };
