@@ -4,6 +4,9 @@ import ChatHeader from './components/ChatHeader';
 import ChatBody from './components/ChatBody';
 import Login from './components/Login';
 
+import CognitoClient from './lib/cognito-client';
+import MQTTClient from './lib/mqtt-client';
+
 class App extends Component {
     constructor(){
         super();
@@ -11,7 +14,8 @@ class App extends Component {
         this.state = {
             isAuthenticated: false,
             auth: {
-                username: '',
+                email: '',
+                password: '',
                 accessKeyId: '',
                 secretKey: '',
                 sessionToken: ''
@@ -58,12 +62,71 @@ class App extends Component {
         console.log('handleClickMessageSendButton is called..!');
         alert('click!');
     }
+    handleInputEmail = (event)=>{
+        //console.log('handleInputEmail is called..!');
+        const email = event.target.value;
+        this.setState({
+            ...this.state,
+            auth: {
+                ...this.state.auth,
+                email
+            }
+        });
+    }
+    handleInputPassword = (event)=>{
+        //console.log('handleInputPassword is called..!');
+        const password = event.target.value;
+        this.setState({
+            ...this.state,
+            auth: {
+                ...this.state.auth,
+                password
+            }
+        });
+    }
+    handleClickLoginButton = async ()=>{
+        try {
+            // Get Cognito Credentials
+            const { email, password } = this.state.auth;
+            const cognitoClient = new CognitoClient(email,password);
+            const cognitoCredentials = await cognitoClient.getCredentials();
+            // Update Cognito Credentials To App State
+            this.setState({
+                ...this.state,
+                auth: {
+                    ...this.state.auth,
+                    accessKeyId: cognitoCredentials.accessKeyId,
+                    secretAccessKey: cognitoCredentials.secretAccessKey,
+                    sessionToken: cognitoCredentials.sessionToken
+                }
+            });
+            // Init MQTT Connection
+            console.log(cognitoCredentials);
+            const mqttClient = new MQTTClient(email, cognitoCredentials);
+            mqttClient.subscribe(email);
+            // Update Login State
+            this.setState({
+                ...this.state,
+                isAuthenticated: true
+            });
+        } catch(e) {
+            alert(e.message || e);
+        }
+    }
 
     render() {
         const { isAuthenticated } = this.state;
         return (
             <div className="App">
-                { isAuthenticated ? null : <Login /> }
+                {
+                    isAuthenticated
+                    ? null
+                    : <Login
+                        key={'Login'}
+                        handleInputEmail={this.handleInputEmail}
+                        handleInputPassword={this.handleInputPassword}
+                        handleClickLoginButton={this.handleClickLoginButton} />
+                }
                 <ChatHeader
                     key={'ChatHeader'}
                     handleClickExitButton={this.handleClickExitButton} />

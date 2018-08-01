@@ -13,10 +13,18 @@ const LoginWrapper = styled.div`
 `;
 /* Component */
 const Login = (props)=>{
+    const {
+        handleInputEmail,
+        handleInputPassword,
+        handleClickLoginButton
+    } = props;
     return (
         <LoginWrapper>
             <LoginBackgroundLayer />
-            <LoginForm />
+            <LoginForm
+                handleInputEmail={handleInputEmail}
+                handleInputPassword={handleInputPassword}
+                handleClickLoginButton={handleClickLoginButton} />
         </LoginWrapper>
     );
 };

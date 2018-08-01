@@ -18,6 +18,11 @@ const LoginFormWrapper = styled.div`
 `;
 /* Component */
 const LoginForm = (props)=>{
+    const {
+        handleInputEmail,
+        handleInputPassword,
+        handleClickLoginButton
+    } = props;
     return (
         <LoginFormWrapper>
             <Grid textAlign='center' style={{ height: '100%' }} verticalAlign='middle'>
@@ -28,19 +33,17 @@ const LoginForm = (props)=>{
                     <Form size='large'>
                         <Segment>
                             <Form.Input
-                                fluid icon='user'
-                                iconPosition='left'
-                                placeholder='E-mail address' />
+                                icon='user' iconPosition='left' fluid
+                                placeholder='E-mail address'
+                                onChange={handleInputEmail} />
                             <Form.Input
-                                fluid
-                                icon='lock'
-                                iconPosition='left'
+                                icon='lock' iconPosition='left' fluid
                                 placeholder='Password'
-                                type='password' />
+                                type='password'
+                                onChange={handleInputPassword} />
                             <Button
-                                color='blue'
-                                size='large'
-                                fluid>
+                                color='blue' size='large' fluid
+                                onClick={handleClickLoginButton}>
                                 {'Login'}
                             </Button>
                         </Segment>
