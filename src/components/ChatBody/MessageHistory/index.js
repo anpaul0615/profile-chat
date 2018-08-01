@@ -12,6 +12,8 @@ const MessageHistoryWrapper = styled.div`
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
     background-color: #FFFFFF;
+    box-sizing: content-box;
+    -webkit-box-sizing: content-box;
 `;
 const ScrollWrapper = styled.div`
     height: auto;
