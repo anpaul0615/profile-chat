@@ -2,12 +2,20 @@ import React, {Component} from 'react';
 import './App.css';
 import ChatHeader from './components/ChatHeader';
 import ChatBody from './components/ChatBody';
+import Login from './components/Login';
 
 class App extends Component {
     constructor(){
         super();
         this.inputFetchingTimer = null;
         this.state = {
+            isAuthenticated: false,
+            auth: {
+                username: '',
+                accessKeyId: '',
+                secretKey: '',
+                sessionToken: ''
+            },
             messages: [
                 {
                     user: 'paul',
@@ -52,8 +60,10 @@ class App extends Component {
     }
 
     render() {
+        const { isAuthenticated } = this.state;
         return (
             <div className="App">
+                { isAuthenticated ? null : <Login /> }
                 <ChatHeader
                     key={'ChatHeader'}
                     handleClickExitButton={this.handleClickExitButton} />
