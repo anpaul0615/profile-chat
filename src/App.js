@@ -6,6 +6,7 @@ import ChatSignature from './components/ChatSignature';
 
 import CognitoClient from './lib/cognito-client';
 import MQTTClient from './lib/mqtt-client';
+import PolicyManager from './lib/policy-manager';
 
 class App extends Component {
     constructor(){
@@ -109,8 +110,11 @@ class App extends Component {
                     sessionToken: cognitoCredentials.sessionToken
                 }
             });
+            // Attach Principal Policy
+            const { identityId } = cognitoCredentials;
+            const policymanager = new PolicyManager();
+            await policymanager.attachUserIdentityToPolicy('iot-chat-policy', identityId);
             // Init MQTT Connection
-            console.log(cognitoCredentials);
             const mqttClient = new MQTTClient(email, cognitoCredentials);
             mqttClient.subscribe(email);
             // Update Signin State
