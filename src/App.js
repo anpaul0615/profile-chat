@@ -166,6 +166,38 @@ class App extends Component {
     }
     handleClickSignupButton = async ()=>{
         console.log('handleClickSignupButton is called..!');
+
+        // Check Validation
+        const { email, password, password2 } = this.state.signup;
+        if (!/^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4}$/.test(email)) {
+            return alert('Email Format is Invalid..!');
+        }
+        if (password !== password2) {
+            return alert('Password Confirm is not matched..!');
+        }
+
+        // Register New Account
+        try {
+            // Get Cognito Credentials
+            const cognitoClient = new CognitoClient();
+            const result = await cognitoClient.registerNewAccount(email,password);
+            console.log(result);
+            // Notify Success to User
+            alert('Confirmation code was sent to your email!!');
+            // Reset Signup Data
+            this.setState({
+                ...this.state,
+                hasNoAccount: false,
+                signup: {
+                    email: '',
+                    password: '',
+                    password2: ''
+                }
+            });
+
+        } catch(e) {
+            alert(e.message || e);
+        }
     }
     handleClickGoToSigninButton = ()=>{
         console.log('handleClickGoToSigninButton is called..!');
