@@ -4,28 +4,28 @@ import * as CognitoIdentity from 'amazon-cognito-identity-js';
 
 export default class CognitoClient {
 
-    constructor(username, password) {
+    constructor() {
         // Init CognitoUserPool
         this.userPool = new CognitoIdentity.CognitoUserPool({
             UserPoolId: COGNITO_CONFIG.UserPoolId,
             ClientId: COGNITO_CONFIG.ClientId
         });
-        // Init CognitoUser
-        this.cognitoUser = new CognitoIdentity.CognitoUser({
-            Username : username,
-            Pool : this.userPool
-        });
-        // Init AuthenticationDetails
-        this.authenticationDetails = new CognitoIdentity.AuthenticationDetails({
-            Username : username,
-            Password : password
-        });
     }
 
-    getCredentials() {
+    getCredentials(username, password) {
         return new Promise((resolve,reject)=>{
+            // Init CognitoUser
+            const cognitoUser = new CognitoIdentity.CognitoUser({
+                Username : username,
+                Pool : this.userPool
+            });
+            // Init AuthenticationDetails
+            const authenticationDetails = new CognitoIdentity.AuthenticationDetails({
+                Username : username,
+                Password : password
+            });
             // Authenticate Cognito User
-            this.cognitoUser.authenticateUser(this.authenticationDetails, {
+            cognitoUser.authenticateUser(authenticationDetails, {
                 onSuccess: (result)=>{
                     // Init Cognito-Credentials by Cognito-AccessToken
                     const idToken = result.getIdToken().getJwtToken();
@@ -48,6 +48,27 @@ export default class CognitoClient {
                 onFailure: (err)=>{
                     return reject(err);
                 }
+            });
+        });
+    }
+
+    registerNewAccount(email, password) {
+        return new Promise((resolve,reject)=>{
+            // Set Attributes
+            const username = email.split('@')[0];
+            const attributeList = [
+                new CognitoIdentity.CognitoUserAttribute({
+                    Name: 'email',
+                    Value: email,
+                }),
+                new CognitoIdentity.CognitoUserAttribute({
+                    Name: 'name',
+                    Value: username,
+                })
+            ];
+            this.userPool.signUp(username, password, attributeList, null, (err,result)=>{
+                if (err) return reject(err);
+                else return resolve({ username: result.user.getUsername() });
             });
         });
     }

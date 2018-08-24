@@ -13,9 +13,17 @@ class App extends Component {
         this.inputFetchingTimer = null;
         this.state = {
             isAuthenticated: false,
-            auth: {
+            hasNoAccount: false,
+            login: {
                 email: '',
                 password: '',
+            },
+            signup: {
+                email: '',
+                password: '',
+                password2: '',
+            },
+            auth: {
                 accessKeyId: '',
                 secretKey: '',
                 sessionToken: ''
@@ -62,24 +70,26 @@ class App extends Component {
         console.log('handleClickMessageSendButton is called..!');
         alert('click!');
     }
-    handleInputEmail = (event)=>{
-        //console.log('handleInputEmail is called..!');
+
+    /* Login Functions */
+    handleInputLoginEmail = (event)=>{
+        //console.log('handleInputLoginEmail is called..!');
         const email = event.target.value;
         this.setState({
             ...this.state,
-            auth: {
-                ...this.state.auth,
+            login: {
+                ...this.state.login,
                 email
             }
         });
     }
-    handleInputPassword = (event)=>{
-        //console.log('handleInputPassword is called..!');
+    handleInputLoginPassword = (event)=>{
+        //console.log('handleInputLoginPassword is called..!');
         const password = event.target.value;
         this.setState({
             ...this.state,
-            auth: {
-                ...this.state.auth,
+            login: {
+                ...this.state.login,
                 password
             }
         });
@@ -87,14 +97,13 @@ class App extends Component {
     handleClickLoginButton = async ()=>{
         try {
             // Get Cognito Credentials
-            const { email, password } = this.state.auth;
-            const cognitoClient = new CognitoClient(email,password);
-            const cognitoCredentials = await cognitoClient.getCredentials();
+            const { email, password } = this.state.login;
+            const cognitoClient = new CognitoClient();
+            const cognitoCredentials = await cognitoClient.getCredentials(email,password);
             // Update Cognito Credentials To App State
             this.setState({
                 ...this.state,
                 auth: {
-                    ...this.state.auth,
                     accessKeyId: cognitoCredentials.accessKeyId,
                     secretAccessKey: cognitoCredentials.secretAccessKey,
                     sessionToken: cognitoCredentials.sessionToken
@@ -113,9 +122,61 @@ class App extends Component {
             alert(e.message || e);
         }
     }
+    handleClickGoToSignupButton = ()=>{
+        console.log('handleClickGoToSignupButton is called..!');
+        this.setState({
+            ...this.state,
+            hasNoAccount: true
+        });
+    }
+
+    /* Signup Functions */
+    handleInputSignupEmail = (event)=>{
+        console.log('handleInputSignupEmail is called..!');
+        const email = event.target.value;
+        this.setState({
+            ...this.state,
+            signup: {
+                ...this.state.signup,
+                email
+            }
+        });
+    }
+    handleInputSignupPassword = (event)=>{
+        console.log('handleInputSignupPassword is called..!');
+        const password = event.target.value;
+        this.setState({
+            ...this.state,
+            signup: {
+                ...this.state.signup,
+                password
+            }
+        });
+    }
+    handleInputSignupPasswordAgain = (event)=>{
+        console.log('handleInputSignupPasswordAgain is called..!');
+        const password2 = event.target.value;
+        this.setState({
+            ...this.state,
+            signup: {
+                ...this.state.signup,
+                password2
+            }
+        });
+    }
+    handleClickSignupButton = async ()=>{
+        console.log('handleClickSignupButton is called..!');
+    }
+    handleClickGoToLoginButton = ()=>{
+        console.log('handleClickGoToLoginButton is called..!');
+        this.setState({
+            ...this.state,
+            hasNoAccount: false
+        });
+    }
 
     render() {
-        const { isAuthenticated } = this.state;
+        const { isAuthenticated, hasNoAccount } = this.state;
         return (
             <div className="App">
                 {
@@ -123,9 +184,16 @@ class App extends Component {
                     ? null
                     : <Login
                         key={'Login'}
-                        handleInputEmail={this.handleInputEmail}
-                        handleInputPassword={this.handleInputPassword}
-                        handleClickLoginButton={this.handleClickLoginButton} />
+                        hasNoAccount={hasNoAccount}
+                        handleInputLoginEmail={this.handleInputLoginEmail}
+                        handleInputLoginPassword={this.handleInputLoginPassword}
+                        handleClickLoginButton={this.handleClickLoginButton}
+                        handleClickGoToSignupButton={this.handleClickGoToSignupButton}
+                        handleInputSignupEmail={this.handleInputSignupEmail}
+                        handleInputSignupPassword={this.handleInputSignupPassword}
+                        handleInputSignupPasswordAgain={this.handleInputSignupPasswordAgain}
+                        handleClickSignupButton={this.handleClickSignupButton}
+                        handleClickGoToLoginButton={this.handleClickGoToLoginButton} />
                 }
                 <ChatHeader
                     key={'ChatHeader'}

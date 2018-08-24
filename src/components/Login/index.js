@@ -2,6 +2,7 @@ import React from 'react'
 import styled from "styled-components";
 import LoginBackgroundLayer from "./LoginBackgroundLayer";
 import LoginForm from "./LoginForm";
+import SignupForm from "./SignupForm";
 
 
 /* Style-Wrapper */
@@ -14,17 +15,31 @@ const LoginWrapper = styled.div`
 /* Component */
 const Login = (props)=>{
     const {
-        handleInputEmail,
-        handleInputPassword,
-        handleClickLoginButton
+        hasNoAccount,
+        handleInputLoginEmail, handleInputLoginPassword,
+        handleClickLoginButton, handleClickGoToSignupButton,
+        handleInputSignupEmail, handleInputSignupPassword, handleInputSignupPasswordAgain,
+        handleClickSignupButton, handleClickGoToLoginButton
     } = props;
     return (
         <LoginWrapper>
             <LoginBackgroundLayer />
-            <LoginForm
-                handleInputEmail={handleInputEmail}
-                handleInputPassword={handleInputPassword}
-                handleClickLoginButton={handleClickLoginButton} />
+            {
+                hasNoAccount
+                ? <SignupForm
+                    key={'Signup'}
+                    handleInputSignupEmail={handleInputSignupEmail}
+                    handleInputSignupPassword={handleInputSignupPassword}
+                    handleInputSignupPasswordAgain={handleInputSignupPasswordAgain}
+                    handleClickSignupButton={handleClickSignupButton}
+                    handleClickGoToLoginButton={handleClickGoToLoginButton}  />
+                : <LoginForm
+                    key={'Login'}
+                    handleInputLoginEmail={handleInputLoginEmail}
+                    handleInputLoginPassword={handleInputLoginPassword}
+                    handleClickLoginButton={handleClickLoginButton}
+                    handleClickGoToSignupButton={handleClickGoToSignupButton} />
+            }
         </LoginWrapper>
     );
 };
