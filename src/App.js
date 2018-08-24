@@ -2,7 +2,7 @@ import React, {Component} from 'react';
 import './App.css';
 import ChatHeader from './components/ChatHeader';
 import ChatBody from './components/ChatBody';
-import Login from './components/Login';
+import ChatSignature from './components/ChatSignature';
 
 import CognitoClient from './lib/cognito-client';
 import MQTTClient from './lib/mqtt-client';
@@ -14,7 +14,7 @@ class App extends Component {
         this.state = {
             isAuthenticated: false,
             hasNoAccount: false,
-            login: {
+            signin: {
                 email: '',
                 password: '',
             },
@@ -71,33 +71,33 @@ class App extends Component {
         alert('click!');
     }
 
-    /* Login Functions */
-    handleInputLoginEmail = (event)=>{
-        //console.log('handleInputLoginEmail is called..!');
+    /* Signin Functions */
+    handleInputSigninEmail = (event)=>{
+        //console.log('handleInputSigninEmail is called..!');
         const email = event.target.value;
         this.setState({
             ...this.state,
-            login: {
-                ...this.state.login,
+            signin: {
+                ...this.state.signin,
                 email
             }
         });
     }
-    handleInputLoginPassword = (event)=>{
-        //console.log('handleInputLoginPassword is called..!');
+    handleInputSigninPassword = (event)=>{
+        //console.log('handleInputSigninPassword is called..!');
         const password = event.target.value;
         this.setState({
             ...this.state,
-            login: {
-                ...this.state.login,
+            signin: {
+                ...this.state.signin,
                 password
             }
         });
     }
-    handleClickLoginButton = async ()=>{
+    handleClickSigninButton = async ()=>{
         try {
             // Get Cognito Credentials
-            const { email, password } = this.state.login;
+            const { email, password } = this.state.signin;
             const cognitoClient = new CognitoClient();
             const cognitoCredentials = await cognitoClient.getCredentials(email,password);
             // Update Cognito Credentials To App State
@@ -113,7 +113,7 @@ class App extends Component {
             console.log(cognitoCredentials);
             const mqttClient = new MQTTClient(email, cognitoCredentials);
             mqttClient.subscribe(email);
-            // Update Login State
+            // Update Signin State
             this.setState({
                 ...this.state,
                 isAuthenticated: true
@@ -167,8 +167,8 @@ class App extends Component {
     handleClickSignupButton = async ()=>{
         console.log('handleClickSignupButton is called..!');
     }
-    handleClickGoToLoginButton = ()=>{
-        console.log('handleClickGoToLoginButton is called..!');
+    handleClickGoToSigninButton = ()=>{
+        console.log('handleClickGoToSigninButton is called..!');
         this.setState({
             ...this.state,
             hasNoAccount: false
@@ -182,18 +182,18 @@ class App extends Component {
                 {
                     isAuthenticated
                     ? null
-                    : <Login
-                        key={'Login'}
+                    : <ChatSignature
+                        key={'ChatSignature'}
                         hasNoAccount={hasNoAccount}
-                        handleInputLoginEmail={this.handleInputLoginEmail}
-                        handleInputLoginPassword={this.handleInputLoginPassword}
-                        handleClickLoginButton={this.handleClickLoginButton}
+                        handleInputSigninEmail={this.handleInputSigninEmail}
+                        handleInputSigninPassword={this.handleInputSigninPassword}
+                        handleClickSigninButton={this.handleClickSigninButton}
                         handleClickGoToSignupButton={this.handleClickGoToSignupButton}
                         handleInputSignupEmail={this.handleInputSignupEmail}
                         handleInputSignupPassword={this.handleInputSignupPassword}
                         handleInputSignupPasswordAgain={this.handleInputSignupPasswordAgain}
                         handleClickSignupButton={this.handleClickSignupButton}
-                        handleClickGoToLoginButton={this.handleClickGoToLoginButton} />
+                        handleClickGoToSigninButton={this.handleClickGoToSigninButton} />
                 }
                 <ChatHeader
                     key={'ChatHeader'}

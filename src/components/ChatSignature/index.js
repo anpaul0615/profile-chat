@@ -1,29 +1,29 @@
 import React from 'react'
 import styled from "styled-components";
-import LoginBackgroundLayer from "./LoginBackgroundLayer";
-import LoginForm from "./LoginForm";
+import BackgroundLayer from "./BackgroundLayer";
+import SigninForm from "./SigninForm";
 import SignupForm from "./SignupForm";
 
 
 /* Style-Wrapper */
-const LoginWrapper = styled.div`
+const ChatSignatureWrapper = styled.div`
     width: 100%;
     height: 100%;
     position: fixed;
     z-index: 1000000001;
 `;
 /* Component */
-const Login = (props)=>{
+const ChatSignature = (props)=>{
     const {
         hasNoAccount,
-        handleInputLoginEmail, handleInputLoginPassword,
-        handleClickLoginButton, handleClickGoToSignupButton,
+        handleInputSigninEmail, handleInputSigninPassword,
+        handleClickSigninButton, handleClickGoToSignupButton,
         handleInputSignupEmail, handleInputSignupPassword, handleInputSignupPasswordAgain,
-        handleClickSignupButton, handleClickGoToLoginButton
+        handleClickSignupButton, handleClickGoToSigninButton
     } = props;
     return (
-        <LoginWrapper>
-            <LoginBackgroundLayer />
+        <ChatSignatureWrapper>
+            <BackgroundLayer />
             {
                 hasNoAccount
                 ? <SignupForm
@@ -32,15 +32,15 @@ const Login = (props)=>{
                     handleInputSignupPassword={handleInputSignupPassword}
                     handleInputSignupPasswordAgain={handleInputSignupPasswordAgain}
                     handleClickSignupButton={handleClickSignupButton}
-                    handleClickGoToLoginButton={handleClickGoToLoginButton}  />
-                : <LoginForm
-                    key={'Login'}
-                    handleInputLoginEmail={handleInputLoginEmail}
-                    handleInputLoginPassword={handleInputLoginPassword}
-                    handleClickLoginButton={handleClickLoginButton}
+                    handleClickGoToSigninButton={handleClickGoToSigninButton}  />
+                : <SigninForm
+                    key={'Signin'}
+                    handleInputSigninEmail={handleInputSigninEmail}
+                    handleInputSigninPassword={handleInputSigninPassword}
+                    handleClickSigninButton={handleClickSigninButton}
                     handleClickGoToSignupButton={handleClickGoToSignupButton} />
             }
-        </LoginWrapper>
+        </ChatSignatureWrapper>
     );
 };
-export default Login;
+export default ChatSignature;

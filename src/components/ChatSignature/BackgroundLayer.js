@@ -3,7 +3,7 @@ import styled from "styled-components";
 
 
 /* Style-Wrapper */
-const BackgroundLayer = styled.div`
+const BackgroundLayerWrapper = styled.div`
     width: 100%;
     height: 100%;
     position: absolute;
@@ -13,7 +13,7 @@ const BackgroundLayer = styled.div`
     z-index: 1000000002;
 `;
 /* Component */
-const LoginBackgroundLayer = (props)=>{
-    return <BackgroundLayer />;
+const BackgroundLayer = ()=>{
+    return <BackgroundLayerWrapper />;
 };
-export default LoginBackgroundLayer;
+export default BackgroundLayer;

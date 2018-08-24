@@ -5,7 +5,7 @@ import { Button, Form, Grid, Header, Segment, Message } from 'semantic-ui-react'
 
 
 /* Style-Wrapper */
-const SignupFormWrapper = styled.div`
+const SigninFormWrapper = styled.div`
     max-width: 500px;
     max-height: 440px;
     margin: 0 auto;
@@ -17,50 +17,45 @@ const SignupFormWrapper = styled.div`
     z-index: 1000000003;
 `;
 /* Component */
-const SignupForm = (props)=>{
+const SigninForm = (props)=>{
     const {
-        handleInputSignupEmail, handleInputSignupPassword, handleInputSignupPasswordAgain,
-        handleClickSignupButton, handleClickGoToLoginButton
+        handleInputSigninEmail, handleInputSigninPassword,
+        handleClickSigninButton, handleClickGoToSignupButton
     } = props;
     return (
-        <SignupFormWrapper>
+        <SigninFormWrapper>
             <Grid textAlign='center' style={{ height: '100%' }} verticalAlign='middle'>
                 <Grid.Column style={{ maxWidth: 450 }}>
                     <Header as='h2' color='grey' textAlign='center'>
-                        {'Create new account'}
+                        {'Log-in to your account'}
                     </Header>
                     <Form size='large'>
                         <Segment>
                             <Form.Input
                                 icon='user' iconPosition='left' fluid
                                 placeholder='E-mail address'
-                                onChange={handleInputSignupEmail} />
+                                onChange={handleInputSigninEmail} />
                             <Form.Input
                                 icon='lock' iconPosition='left' fluid
                                 placeholder='Password'
                                 type='password'
-                                onChange={handleInputSignupPassword} />
-                            <Form.Input
-                                icon='lock' iconPosition='left' fluid
-                                placeholder='Password Confirm'
-                                type='password'
-                                onChange={handleInputSignupPasswordAgain} />
+                                onChange={handleInputSigninPassword} />
                             <Button
                                 color='blue' size='large' fluid
-                                onClick={handleClickSignupButton}>
-                                {'Signup'}
+                                onClick={handleClickSigninButton}>
+                                {'Signin'}
                             </Button>
                         </Segment>
                         <Message>
-                            {'Already be registered? '}
-                            <a role='button' onClick={handleClickGoToLoginButton}>
-                                {'Login'}
+                            {'New to here? '}
+                            <a role='button' onClick={handleClickGoToSignupButton}>
+                                {'Sign Up'}
                             </a>
                         </Message>
                     </Form>
                 </Grid.Column>
             </Grid>
-        </SignupFormWrapper>
+        </SigninFormWrapper>
     );
 };
-export default SignupForm;
+export default SigninForm;
