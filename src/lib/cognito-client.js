@@ -15,17 +15,17 @@ export default class CognitoClient {
     getCredentials(username, password) {
         return new Promise((resolve,reject)=>{
             // Init CognitoUser
-            const cognitoUser = new CognitoIdentity.CognitoUser({
+            this.cognitoUser = new CognitoIdentity.CognitoUser({
                 Username : username,
                 Pool : this.userPool
             });
             // Init AuthenticationDetails
-            const authenticationDetails = new CognitoIdentity.AuthenticationDetails({
+            this.authenticationDetails = new CognitoIdentity.AuthenticationDetails({
                 Username : username,
                 Password : password
             });
             // Authenticate Cognito User
-            cognitoUser.authenticateUser(authenticationDetails, {
+            this.cognitoUser.authenticateUser(this.authenticationDetails, {
                 onSuccess: (result)=>{
                     // Init Cognito-Credentials by Cognito-AccessToken
                     const idToken = result.getIdToken().getJwtToken();
@@ -71,5 +71,9 @@ export default class CognitoClient {
                 else return resolve({ username: result.user.getUsername() });
             });
         });
+    }
+
+    signout() {
+        this.cognitoUser.signOut();
     }
 }

@@ -86,4 +86,9 @@ export default class MQTTClient {
             });
         });
     }
+
+    disconnect(){
+        instance.end();
+        instance = null;
+    }
 }

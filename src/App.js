@@ -11,6 +11,7 @@ import PolicyManager from './lib/policy-manager';
 class App extends Component {
     constructor(){
         super();
+        this.cognitoClient = new CognitoClient();
         this.inputFetchingTimer = null;
         this.state = {
             isAuthenticated: false,
@@ -58,10 +59,44 @@ class App extends Component {
             ]
         };
     }
+
+    /* Signout Functions */
     handleClickExitButton = ()=>{
         console.log('handleClickExitButton is called..!');
+        // Confirm Signout
+        if ( !window.confirm('Signout Now?') ) {
+            return;
+        }
+        // Signout Cognito Connection
+        this.cognitoClient.signout();
+        // Disconnect MQTT Connection
+        this.mqttClient.disconnect();
+        // Clear All States
+        this.setState({
+            ...this.state,
+            isAuthenticated: false,
+            hasNoAccount: false,
+            signin: {
+                email: '',
+                password: '',
+            },
+            signup: {
+                email: '',
+                password: '',
+                password2: '',
+            },
+            auth: {
+                accessKeyId: '',
+                secretKey: '',
+                sessionToken: ''
+            },
+            messages: []
+        });
+        // Close Iframe Window
         window.parent.postMessage('chat-off','*');
     }
+
+    /* Messaging Functions */
     handleChangeInputText = (event)=>{
         console.log('handleChangeInputText is called..!');
         console.log(event.target.value);
@@ -99,8 +134,7 @@ class App extends Component {
         try {
             // Get Cognito Credentials
             const { email, password } = this.state.signin;
-            const cognitoClient = new CognitoClient();
-            const cognitoCredentials = await cognitoClient.getCredentials(email,password);
+            const cognitoCredentials = await this.cognitoClient.getCredentials(email,password);
             // Update Cognito Credentials To App State
             this.setState({
                 ...this.state,
@@ -112,11 +146,11 @@ class App extends Component {
             });
             // Attach Principal Policy
             const { identityId } = cognitoCredentials;
-            const policymanager = new PolicyManager();
-            await policymanager.attachUserIdentityToPolicy('iot-chat-policy', identityId);
+            const policyManager = new PolicyManager();
+            await policyManager.attachUserIdentityToPolicy('iot-chat-policy', identityId);
             // Init MQTT Connection
-            const mqttClient = new MQTTClient(email, cognitoCredentials);
-            mqttClient.subscribe(email);
+            this.mqttClient = new MQTTClient(email, cognitoCredentials);
+            this.mqttClient.subscribe(email);
             // Update Signin State
             this.setState({
                 ...this.state,
@@ -183,8 +217,7 @@ class App extends Component {
         // Register New Account
         try {
             // Get Cognito Credentials
-            const cognitoClient = new CognitoClient();
-            const result = await cognitoClient.registerNewAccount(email,password);
+            const result = await this.cognitoClient.registerNewAccount(email,password);
             console.log(result);
             // Notify Success to User
             alert('Confirmation code was sent to your email!!');
