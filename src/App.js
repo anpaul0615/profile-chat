@@ -85,6 +85,8 @@ class App extends Component {
     handleClickMessageSendButton = async ()=>{
         // console.log('handleClickMessageSendButton is called..!');
         const { messageGroup, messageBuffer } = this.state;
+        if (messageBuffer === '') return;
+        
         const messageBody = {
             groupname: messageGroup,
             regdate: new Date().toISOString(),
@@ -291,6 +293,19 @@ class App extends Component {
             ...this.state,
             hasNoAccount: false
         });
+    }
+    
+    /* Keyboard Shortcut Functions */
+    handleKeydown = (event)=>{
+        if (event.keyCode===13 && event.ctrlKey) {
+            this.handleClickMessageSendButton();
+        }
+    }
+    componentDidMount() {
+        document.addEventListener('keydown', this.handleKeydown);
+    }
+    componentWillUnmount() {
+        document.removeEventListener('keydown', this.handleKeydown);
     }
 
     render() {
