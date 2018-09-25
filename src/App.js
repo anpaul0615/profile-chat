@@ -7,10 +7,12 @@ import ChatSignature from './components/ChatSignature';
 import CognitoClient from './lib/cognito-client';
 import MQTTClient from './lib/mqtt-client';
 import PolicyManager from './lib/policy-manager';
+import APIGatewayClient from './lib/apigateway-client';
 
 class App extends Component {
     constructor(){
         super();
+        this.apigwClient = new APIGatewayClient();
         this.cognitoClient = new CognitoClient();
         this.inputFetchingTimer = null;
         this.state = {
@@ -30,33 +32,7 @@ class App extends Component {
                 secretKey: '',
                 sessionToken: ''
             },
-            messages: [
-                {
-                    user: 'paul',
-                    content: 'aaa',
-                    timestamp: 'yyyy-mm-dd hh:mm:ss'
-                },
-                {
-                    user: 'guest',
-                    content: 'bbb',
-                    timestamp: 'yyyy-mm-dd hh:mm:ss'
-                },
-                {
-                    user: 'guest',
-                    content: 'ccc',
-                    timestamp: 'yyyy-mm-dd hh:mm:ss'
-                },
-                {
-                    user: 'paul',
-                    content: 'Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry\'s standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum.',
-                    timestamp: 'yyyy-mm-dd hh:mm:ss'
-                },
-                {
-                    user: 'guest',
-                    content: 'Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry\'s standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum.',
-                    timestamp: 'yyyy-mm-dd hh:mm:ss'
-                }
-            ]
+            messages: []
         };
     }
 
@@ -151,12 +127,46 @@ class App extends Component {
             // Init MQTT Connection
             this.mqttClient = new MQTTClient(email, cognitoCredentials);
             this.mqttClient.subscribe(email);
-            // Update Signin State
+
+            // Check Message Group
+            await this.apigwClient.invokeAPIGateway({
+                path: '/messages/group',
+                method: 'GET',
+                queryParams: { groupname: email }
+            })
+            .catch(e=>
+                this.apigwClient.invokeAPIGateway({
+                    path: '/messages/group',
+                    method: 'POST',
+                    body: {
+                        groupname: email,
+                        userList: [ email, 'anpaul0615@gmail.com' ]
+                    }
+                }).catch(e=>e)
+            );
+
+            // Get All Message History
+            const { data:messageHistory } = await this.apigwClient.invokeAPIGateway({
+                path: '/messages',
+                method: 'GET',
+                queryParams: { groupname: email, startDate: '1000-01-01T00:00:00.000Z' }
+            }).catch(e=>e);
+
+            // Parse Message History
+            const messages = (messageHistory || []).map(e=>({
+                user: e.username === 'anpaul0615@gmail.com' ? 'paul' : e.username,
+                content: e.content,
+                timestamp: e.regdate,
+            }));
+
+            // Update Signin State & Message History
             this.setState({
                 ...this.state,
+                messages,
                 isAuthenticated: true
             });
         } catch(e) {
+            // console.log(e);
             alert(e.message || e);
         }
     }
