@@ -86,7 +86,7 @@ class App extends Component {
         // console.log('handleClickMessageSendButton is called..!');
         const { messageGroup, messageBuffer } = this.state;
         if (messageBuffer === '') return;
-        
+
         const messageBody = {
             groupname: messageGroup,
             regdate: new Date().toISOString(),
@@ -191,6 +191,10 @@ class App extends Component {
                 messages,
                 isAuthenticated: true
             });
+            
+            // Move Scroll To Bottom
+            this.setScrollPositionToBottom();
+
         } catch(e) {
             // console.log(e);
             alert(e.message || e);
@@ -210,6 +214,7 @@ class App extends Component {
                 }
             ]
         });
+        this.setScrollPositionToBottom();
     }
     handleClickGoToSignupButton = ()=>{
         console.log('handleClickGoToSignupButton is called..!');
@@ -308,6 +313,16 @@ class App extends Component {
         document.removeEventListener('keydown', this.handleKeydown);
     }
 
+    /* Scroll Handle Functions */
+    setScollDiv = (el)=>{
+        this.scrollDiv = el;
+    }
+    setScrollPositionToBottom = ()=>{
+        if (this.scrollDiv) {
+            this.scrollDiv.scrollIntoView(false);
+        }
+    }
+
     render() {
         const { isAuthenticated, hasNoAccount } = this.state;
         return (
@@ -336,7 +351,8 @@ class App extends Component {
                     messages={this.state.messages}
                     messageBuffer={this.state.messageBuffer}
                     handleChangeInputText={this.handleChangeInputText}
-                    handleClickMessageSendButton={this.handleClickMessageSendButton} />
+                    handleClickMessageSendButton={this.handleClickMessageSendButton}
+                    setScollDiv={this.setScollDiv} />
             </div>
         );
     }

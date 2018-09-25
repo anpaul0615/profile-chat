@@ -20,10 +20,10 @@ const ScrollWrapper = styled.div`
 `;
 /* Component */
 const MessageHistory = (props)=>{
-    const { messages } = props;
+    const { messages, setScollDiv } = props;
     return(
         <MessageHistoryWrapper>
-            <ScrollWrapper>
+            <ScrollWrapper innerRef={el=>setScollDiv(el)} >
             {
                 messages
                     ?

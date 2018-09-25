@@ -16,11 +16,12 @@ const ChatBody = (props)=>{
         messages,
         messageBuffer,
         handleChangeInputText,
-        handleClickMessageSendButton
+        handleClickMessageSendButton,
+        setScollDiv
     }= props;
     return (
         <ChatBodyWrapper>
-            <MessageHistory messages={messages}/>
+            <MessageHistory messages={messages} setScollDiv={setScollDiv} />
             <MessageInputBox
                 messageBuffer={messageBuffer}
                 handleChangeInputText={handleChangeInputText}
