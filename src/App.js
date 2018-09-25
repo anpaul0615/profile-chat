@@ -32,6 +32,8 @@ class App extends Component {
                 secretKey: '',
                 sessionToken: ''
             },
+            messageGroup: '',
+            messageBuffer: '',
             messages: []
         };
     }
@@ -74,13 +76,33 @@ class App extends Component {
 
     /* Messaging Functions */
     handleChangeInputText = (event)=>{
-        console.log('handleChangeInputText is called..!');
-        console.log(event.target.value);
-        // alert('change!');
+        // console.log('handleChangeInputText is called..!');
+        this.setState({
+            ...this.state,
+            messageBuffer: event.target.value
+        });
     }
-    handleClickMessageSendButton = ()=>{
-        console.log('handleClickMessageSendButton is called..!');
-        alert('click!');
+    handleClickMessageSendButton = async ()=>{
+        // console.log('handleClickMessageSendButton is called..!');
+        const { messageGroup, messageBuffer } = this.state;
+        const messageBody = {
+            groupname: messageGroup,
+            regdate: new Date().toISOString(),
+            content: messageBuffer,
+            username: this.state.signin.email
+        };
+        await this.apigwClient.invokeAPIGateway({
+            path: '/messages',
+            method: 'POST',
+            body: messageBody
+        }).catch(e=>e);
+        this.mqttClient.publish(JSON.stringify(messageBody));
+
+        // Clear MessageBuffer
+        this.setState({
+            ...this.state,
+            messageBuffer: ''
+        });
     }
 
     /* Signin Functions */
@@ -126,8 +148,9 @@ class App extends Component {
             await policyManager.attachUserIdentityToPolicy('iot-chat-policy', identityId);
             // Init MQTT Connection
             this.mqttClient = new MQTTClient(email, cognitoCredentials);
-            this.mqttClient.subscribe(email);
-
+            this.mqttClient.registerRecieveMessageCallback(this.handleRecieveMessage);
+            this.mqttClient.subscribe();
+            
             // Check Message Group
             await this.apigwClient.invokeAPIGateway({
                 path: '/messages/group',
@@ -162,6 +185,7 @@ class App extends Component {
             // Update Signin State & Message History
             this.setState({
                 ...this.state,
+                messageGroup: email,
                 messages,
                 isAuthenticated: true
             });
@@ -169,6 +193,21 @@ class App extends Component {
             // console.log(e);
             alert(e.message || e);
         }
+    }
+    handleRecieveMessage = (messageChunk)=>{
+        const oldMessages = this.state.messages;
+        const newMessage = JSON.parse(messageChunk.toString());
+        this.setState({
+            ...this.state,
+            messages: [
+                ...oldMessages,
+                {
+                    user: newMessage.username === 'anpaul0615@gmail.com' ? 'paul' : newMessage.username,
+                    content: newMessage.content,
+                    timestamp: newMessage.regdate
+                }
+            ]
+        });
     }
     handleClickGoToSignupButton = ()=>{
         console.log('handleClickGoToSignupButton is called..!');
@@ -280,6 +319,7 @@ class App extends Component {
                 <ChatBody
                     key={'ChatBody'}
                     messages={this.state.messages}
+                    messageBuffer={this.state.messageBuffer}
                     handleChangeInputText={this.handleChangeInputText}
                     handleClickMessageSendButton={this.handleClickMessageSendButton} />
             </div>

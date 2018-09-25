@@ -34,11 +34,6 @@ export default class MQTTClient {
         instance.on('connect', (result)=>{
             console.log('event#connect..');
             console.log(result);
-            this.publish(JSON.stringify({
-                date: new Date(),
-                username: this.clientId,
-                message: 'connected..!'
-            }));
         });
         instance.on('reconnect', (result)=>{
             console.log('event#reconnect..');
@@ -52,10 +47,14 @@ export default class MQTTClient {
             console.log('event#error..');
             console.log(err);
         });
-        instance.on('message', (topic, message) => {
+    }
+
+    registerRecieveMessageCallback(handleRecieveMessage) {
+        instance.on('message', (topic, messageChunk) => {
             console.log('event#message..');
             console.log('> topic : ', topic.toString());
-            console.log('> message : ', message.toString());
+            console.log('> messageChunk : ', messageChunk.toString());
+            handleRecieveMessage(messageChunk.toString());
         });
     }
 

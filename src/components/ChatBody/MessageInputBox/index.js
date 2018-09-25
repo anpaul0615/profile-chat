@@ -18,12 +18,13 @@ const MessageInputBoxWrapper = styled.div`
 /* Component */
 const MessageInputBox = (props)=>{
     const { 
+        messageBuffer,
         handleChangeInputText,
         handleClickMessageSendButton
     } = props;
     return (
         <MessageInputBoxWrapper>
-            <InputBox handleChangeInputText={handleChangeInputText} />
+            <InputBox messageBuffer={messageBuffer} handleChangeInputText={handleChangeInputText} />
             <SendButton handleClickMessageSendButton={handleClickMessageSendButton} />
         </MessageInputBoxWrapper>
     );

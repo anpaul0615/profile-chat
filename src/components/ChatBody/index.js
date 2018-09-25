@@ -14,6 +14,7 @@ const ChatBodyWrapper = styled.div`
 const ChatBody = (props)=>{
     const {
         messages,
+        messageBuffer,
         handleChangeInputText,
         handleClickMessageSendButton
     }= props;
@@ -21,6 +22,7 @@ const ChatBody = (props)=>{
         <ChatBodyWrapper>
             <MessageHistory messages={messages}/>
             <MessageInputBox
+                messageBuffer={messageBuffer}
                 handleChangeInputText={handleChangeInputText}
                 handleClickMessageSendButton={handleClickMessageSendButton}/>
         </ChatBodyWrapper>
