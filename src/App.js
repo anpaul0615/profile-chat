@@ -3,6 +3,7 @@ import './App.css';
 import ChatHeader from './components/ChatHeader';
 import ChatBody from './components/ChatBody';
 import ChatSignature from './components/ChatSignature';
+import ChatGroup from './components/ChatGroup';
 
 import CognitoClient from './lib/cognito-client';
 import MQTTClient from './lib/mqtt-client';
@@ -16,6 +17,7 @@ class App extends Component {
         this.cognitoClient = new CognitoClient();
         this.inputFetchingTimer = null;
         this.state = {
+            currentPath: '/',
             isAuthenticated: false,
             hasNoAccount: false,
             signin: {
@@ -36,6 +38,18 @@ class App extends Component {
             messageBuffer: '',
             messages: []
         };
+    }
+
+    /* Page Router */
+    handlePageRouter = (path)=>{
+        console.log(path);
+        this.setState({ ...this.state, currentPath: path });
+    }
+    handleClickOpenChatGroupButton = ()=>{
+        this.handlePageRouter('/group');
+    }
+    handleClickCloseChatGroupButton = ()=>{
+        this.handlePageRouter('/');
     }
 
     /* Signout Functions */
@@ -324,7 +338,7 @@ class App extends Component {
     }
 
     render() {
-        const { isAuthenticated, hasNoAccount } = this.state;
+        const { currentPath, isAuthenticated, hasNoAccount } = this.state;
         return (
             <div className="App">
                 {
@@ -343,16 +357,23 @@ class App extends Component {
                         handleClickSignupButton={this.handleClickSignupButton}
                         handleClickGoToSigninButton={this.handleClickGoToSigninButton} />
                 }
-                <ChatHeader
-                    key={'ChatHeader'}
-                    handleClickExitButton={this.handleClickExitButton} />
-                <ChatBody
-                    key={'ChatBody'}
-                    messages={this.state.messages}
-                    messageBuffer={this.state.messageBuffer}
-                    handleChangeInputText={this.handleChangeInputText}
-                    handleClickMessageSendButton={this.handleClickMessageSendButton}
-                    setScollDiv={this.setScollDiv} />
+                {
+                    currentPath === '/group'
+                    ? <ChatGroup handleClickCloseChatGroupButton={this.handleClickCloseChatGroupButton} />
+                    : [
+                        <ChatHeader
+                            key={'ChatHeader'}
+                            handleClickExitButton={this.handleClickExitButton}
+                            handleClickOpenChatGroupButton={this.handleClickOpenChatGroupButton} />,
+                        <ChatBody
+                            key={'ChatBody'}
+                            messages={this.state.messages}
+                            messageBuffer={this.state.messageBuffer}
+                            handleChangeInputText={this.handleChangeInputText}
+                            handleClickMessageSendButton={this.handleClickMessageSendButton}
+                            setScollDiv={this.setScollDiv} />
+                        ]
+                }
             </div>
         );
     }

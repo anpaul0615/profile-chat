@@ -1,5 +1,5 @@
 import React from 'react';
-import ConfigButton from './ConfigButton';
+import ChatGroupButton from './ChatGroupButton';
 import ExitButton from './ExitButton';
 import styled from "styled-components";
 
@@ -25,12 +25,12 @@ const ChatHeaderWrapper = styled.div`
 /* Component */
 const ChatHeader = (props)=>{
     const {
-        handleClickOpenConfigButton,
+        handleClickOpenChatGroupButton,
         handleClickExitButton,
     } = props;
     return (
         <ChatHeaderWrapper>
-            <ConfigButton handleClickOpenConfigButton={handleClickOpenConfigButton} />
+            <ChatGroupButton handleClickOpenChatGroupButton={handleClickOpenChatGroupButton} />
             "ChatHeader"
             <ExitButton handleClickExitButton={handleClickExitButton} />
         </ChatHeaderWrapper>
