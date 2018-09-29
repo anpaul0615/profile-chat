@@ -24,6 +24,5 @@ const InputBox = (props)=>{
                 value={messageBuffer}
                 onChange={(event)=>handleChangeInputText(event)} 
                 placeholder={'Please Input Here.'} />;
-        
 };
 export default InputBox;

@@ -3,7 +3,7 @@ import styled from "styled-components";
 
 
 /* Style-Wrapper */
-const CloseButtonWrapper = styled.div`
+const AppExitButtonWrapper = styled.div`
     position: absolute;
     top: 0;
     right: 0;
@@ -25,8 +25,8 @@ const CloseButtonWrapper = styled.div`
     }
 `;
 /* Component */
-const CloseButton = (props)=>{
-    const { handleClickExitButton } = props;
-    return <CloseButtonWrapper onClick={()=>handleClickExitButton()} />;
+const AppExitButton = (props)=>{
+    const { handleClickAppExitButton } = props;
+    return <AppExitButtonWrapper onClick={()=>handleClickAppExitButton()} />;
 };
-export default CloseButton;
+export default AppExitButton;

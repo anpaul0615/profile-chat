@@ -1,6 +1,6 @@
 import React from 'react';
 import ChatGroupButton from './ChatGroupButton';
-import ExitButton from './ExitButton';
+import AppExitButton from './AppExitButton';
 import styled from "styled-components";
 
 
@@ -26,13 +26,13 @@ const ChatHeaderWrapper = styled.div`
 const ChatHeader = (props)=>{
     const {
         handleClickOpenChatGroupButton,
-        handleClickExitButton,
+        handleClickAppExitButton,
     } = props;
     return (
         <ChatHeaderWrapper>
             <ChatGroupButton handleClickOpenChatGroupButton={handleClickOpenChatGroupButton} />
             "ChatHeader"
-            <ExitButton handleClickExitButton={handleClickExitButton} />
+            <AppExitButton handleClickAppExitButton={handleClickAppExitButton} />
         </ChatHeaderWrapper>
     );
 };

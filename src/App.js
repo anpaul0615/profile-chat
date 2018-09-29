@@ -1,8 +1,7 @@
 import React, {Component} from 'react';
 import './App.css';
-import ChatHeader from './components/ChatHeader';
-import ChatBody from './components/ChatBody';
 import ChatSignature from './components/ChatSignature';
+import Chat from './components/Chat';
 import ChatGroup from './components/ChatGroup';
 
 import CognitoClient from './lib/cognito-client';
@@ -53,8 +52,8 @@ class App extends Component {
     }
 
     /* Signout Functions */
-    handleClickExitButton = ()=>{
-        console.log('handleClickExitButton is called..!');
+    handleClickAppExitButton = ()=>{
+        console.log('handleClickAppExitButton is called..!');
         // Confirm Signout
         if ( !window.confirm('Signout Now?') ) {
             return;
@@ -360,19 +359,14 @@ class App extends Component {
                 {
                     currentPath === '/group'
                     ? <ChatGroup handleClickCloseChatGroupButton={this.handleClickCloseChatGroupButton} />
-                    : [
-                        <ChatHeader
-                            key={'ChatHeader'}
-                            handleClickExitButton={this.handleClickExitButton}
-                            handleClickOpenChatGroupButton={this.handleClickOpenChatGroupButton} />,
-                        <ChatBody
-                            key={'ChatBody'}
-                            messages={this.state.messages}
-                            messageBuffer={this.state.messageBuffer}
-                            handleChangeInputText={this.handleChangeInputText}
-                            handleClickMessageSendButton={this.handleClickMessageSendButton}
-                            setScollDiv={this.setScollDiv} />
-                        ]
+                    : <Chat
+                        messages={this.state.messages}
+                        messageBuffer={this.state.messageBuffer}
+                        handleClickAppExitButton={this.handleClickAppExitButton}
+                        handleClickOpenChatGroupButton={this.handleClickOpenChatGroupButton}
+                        handleChangeInputText={this.handleChangeInputText}
+                        handleClickMessageSendButton={this.handleClickMessageSendButton}
+                        setScollDiv={this.setScollDiv} />
                 }
             </div>
         );
