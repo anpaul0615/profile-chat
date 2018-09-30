@@ -99,8 +99,9 @@ class App extends Component {
     /* Messaging Functions */
     handleChangeInputText = (event)=>{
         // console.log('handleChangeInputText is called..!');
+        const messageBuffer = event.target.value;
         this.setState((prevState,props)=>({
-            messageBuffer: event.target.value
+            messageBuffer
         }));
     }
     handleClickMessageSendButton = async ()=>{

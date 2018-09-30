@@ -22,7 +22,7 @@ const InputBox = (props)=>{
     const { messageBuffer, handleChangeInputText } = props;
     return <InputBoxWrapper
                 value={messageBuffer}
-                onChange={(event)=>handleChangeInputText(event)} 
+                onChange={handleChangeInputText}
                 placeholder={'Please Input Here.'} />;
 };
 export default InputBox;
