@@ -41,7 +41,6 @@ class App extends Component {
 
     /* Page Router */
     handlePageRouter = (path)=>{
-        console.log(path);
         this.setState((prevState,props)=>({ currentPath: path }));
     }
     handleClickOpenChatGroupButton = ()=>{
@@ -49,6 +48,16 @@ class App extends Component {
     }
     handleClickCloseChatGroupButton = ()=>{
         this.handlePageRouter('/');
+    }
+    checkAuthentication = ()=>{
+        const { isAuthenticated }= this.state;
+        if (!isAuthenticated) {
+            this.setState((prevState,props)=>({
+                currentPath: '/auth'
+            }));
+            return false;
+        }
+        return true;
     }
 
     /* Signout Functions */
@@ -64,6 +73,7 @@ class App extends Component {
         this.mqttClient.disconnect();
         // Clear All States
         this.setState((prevState,props)=>({
+            currentPath: '/auth',
             isAuthenticated: false,
             hasNoAccount: false,
             signin: {
@@ -193,6 +203,7 @@ class App extends Component {
 
             // Update Signin State & Message History
             this.setState((prevState,props)=>({
+                currentPath: '/',
                 messageGroup: email,
                 messages,
                 isAuthenticated: true
@@ -323,37 +334,41 @@ class App extends Component {
     }
 
     render() {
-        const { currentPath, isAuthenticated, hasNoAccount } = this.state;
         return (
             <div className="App">
-                {
-                    isAuthenticated
-                    ? null
-                    : <ChatSignature
-                        key={'ChatSignature'}
-                        hasNoAccount={hasNoAccount}
-                        handleInputSigninEmail={this.handleInputSigninEmail}
-                        handleInputSigninPassword={this.handleInputSigninPassword}
-                        handleClickSigninButton={this.handleClickSigninButton}
-                        handleClickGoToSignupButton={this.handleClickGoToSignupButton}
-                        handleInputSignupEmail={this.handleInputSignupEmail}
-                        handleInputSignupPassword={this.handleInputSignupPassword}
-                        handleInputSignupPasswordAgain={this.handleInputSignupPasswordAgain}
-                        handleClickSignupButton={this.handleClickSignupButton}
-                        handleClickGoToSigninButton={this.handleClickGoToSigninButton} />
+            {(()=>{
+                switch(this.state.currentPath) {
+                case '/auth':
+                    return <ChatSignature
+                                key={'ChatSignature'}
+                                hasNoAccount={this.state.hasNoAccount}
+                                handleInputSigninEmail={this.handleInputSigninEmail}
+                                handleInputSigninPassword={this.handleInputSigninPassword}
+                                handleClickSigninButton={this.handleClickSigninButton}
+                                handleClickGoToSignupButton={this.handleClickGoToSignupButton}
+                                handleInputSignupEmail={this.handleInputSignupEmail}
+                                handleInputSignupPassword={this.handleInputSignupPassword}
+                                handleInputSignupPasswordAgain={this.handleInputSignupPasswordAgain}
+                                handleClickSignupButton={this.handleClickSignupButton}
+                                handleClickGoToSigninButton={this.handleClickGoToSigninButton} />;
+                case '/group':
+                    return <ChatGroup
+                                checkAuthentication={this.checkAuthentication}
+                                handleClickCloseChatGroupButton={this.handleClickCloseChatGroupButton} />;
+                case '/':
+                    return <Chat
+                                checkAuthentication={this.checkAuthentication}
+                                messages={this.state.messages}
+                                messageBuffer={this.state.messageBuffer}
+                                handleClickAppExitButton={this.handleClickAppExitButton}
+                                handleClickOpenChatGroupButton={this.handleClickOpenChatGroupButton}
+                                handleChangeInputText={this.handleChangeInputText}
+                                handleClickMessageSendButton={this.handleClickMessageSendButton}
+                                setScollDiv={this.setScollDiv} />;
+                default:
+                    return <h1>Something is wrong..!</h1>;
                 }
-                {
-                    currentPath === '/group'
-                    ? <ChatGroup handleClickCloseChatGroupButton={this.handleClickCloseChatGroupButton} />
-                    : <Chat
-                        messages={this.state.messages}
-                        messageBuffer={this.state.messageBuffer}
-                        handleClickAppExitButton={this.handleClickAppExitButton}
-                        handleClickOpenChatGroupButton={this.handleClickOpenChatGroupButton}
-                        handleChangeInputText={this.handleChangeInputText}
-                        handleClickMessageSendButton={this.handleClickMessageSendButton}
-                        setScollDiv={this.setScollDiv} />
-                }
+            })()}
             </div>
         );
     }

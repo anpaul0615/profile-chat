@@ -13,6 +13,7 @@ const ChatWrapper = styled.div`
 /* Component */
 const Chat = (props)=>{
     const {
+        checkAuthentication,
         messages, messageBuffer,
         handleClickAppExitButton,
         handleClickOpenChatGroupButton,
@@ -20,8 +21,8 @@ const Chat = (props)=>{
         handleClickMessageSendButton,
         setScollDiv
     }= props;
-    return (
-        <ChatWrapper>
+    return checkAuthentication()
+    ?   <ChatWrapper>
             <ChatHeader
                 handleClickAppExitButton={handleClickAppExitButton}
                 handleClickOpenChatGroupButton={handleClickOpenChatGroupButton} />
@@ -32,6 +33,6 @@ const Chat = (props)=>{
                 handleClickMessageSendButton={handleClickMessageSendButton}
                 setScollDiv={setScollDiv} />
         </ChatWrapper>
-    );
+    :   <p>Unauthenticated..!</p>;
 };
 export default Chat;
