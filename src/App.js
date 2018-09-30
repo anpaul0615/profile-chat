@@ -42,7 +42,7 @@ class App extends Component {
     /* Page Router */
     handlePageRouter = (path)=>{
         console.log(path);
-        this.setState({ ...this.state, currentPath: path });
+        this.setState((prevState,props)=>({ currentPath: path }));
     }
     handleClickOpenChatGroupButton = ()=>{
         this.handlePageRouter('/group');
@@ -63,8 +63,7 @@ class App extends Component {
         // Disconnect MQTT Connection
         this.mqttClient.disconnect();
         // Clear All States
-        this.setState({
-            ...this.state,
+        this.setState((prevState,props)=>({
             isAuthenticated: false,
             hasNoAccount: false,
             signin: {
@@ -82,7 +81,7 @@ class App extends Component {
                 sessionToken: ''
             },
             messages: []
-        });
+        }));
         // Close Iframe Window
         window.parent.postMessage('chat-off','*');
     }
@@ -90,10 +89,9 @@ class App extends Component {
     /* Messaging Functions */
     handleChangeInputText = (event)=>{
         // console.log('handleChangeInputText is called..!');
-        this.setState({
-            ...this.state,
+        this.setState((prevState,props)=>({
             messageBuffer: event.target.value
-        });
+        }));
     }
     handleClickMessageSendButton = async ()=>{
         // console.log('handleClickMessageSendButton is called..!');
@@ -114,34 +112,31 @@ class App extends Component {
         this.mqttClient.publish(JSON.stringify(messageBody));
 
         // Clear MessageBuffer
-        this.setState({
-            ...this.state,
+        this.setState((prevState,props)=>({
             messageBuffer: ''
-        });
+        }));
     }
 
     /* Signin Functions */
     handleInputSigninEmail = (event)=>{
         //console.log('handleInputSigninEmail is called..!');
         const email = event.target.value;
-        this.setState({
-            ...this.state,
+        this.setState((prevState,props)=>({
             signin: {
-                ...this.state.signin,
+                ...prevState.signin,
                 email
             }
-        });
+        }));
     }
     handleInputSigninPassword = (event)=>{
         //console.log('handleInputSigninPassword is called..!');
         const password = event.target.value;
-        this.setState({
-            ...this.state,
+        this.setState((prevState,props)=>({
             signin: {
-                ...this.state.signin,
+                ...prevState.signin,
                 password
             }
-        });
+        }));
     }
     handleClickSigninButton = async ()=>{
         try {
@@ -149,14 +144,13 @@ class App extends Component {
             const { email, password } = this.state.signin;
             const cognitoCredentials = await this.cognitoClient.getCredentials(email,password);
             // Update Cognito Credentials To App State
-            this.setState({
-                ...this.state,
+            this.setState((prevState,props)=>({
                 auth: {
                     accessKeyId: cognitoCredentials.accessKeyId,
                     secretAccessKey: cognitoCredentials.secretAccessKey,
                     sessionToken: cognitoCredentials.sessionToken
                 }
-            });
+            }));
             // Attach Principal Policy
             const { identityId } = cognitoCredentials;
             const policyManager = new PolicyManager();
@@ -198,13 +192,12 @@ class App extends Component {
             }));
 
             // Update Signin State & Message History
-            this.setState({
-                ...this.state,
+            this.setState((prevState,props)=>({
                 messageGroup: email,
                 messages,
                 isAuthenticated: true
-            });
-            
+            }));
+
             // Move Scroll To Bottom
             this.setScrollPositionToBottom();
 
@@ -216,8 +209,7 @@ class App extends Component {
     handleRecieveMessage = (messageChunk)=>{
         const oldMessages = this.state.messages;
         const newMessage = JSON.parse(messageChunk.toString());
-        this.setState({
-            ...this.state,
+        this.setState((prevState,props)=>({
             messages: [
                 ...oldMessages,
                 {
@@ -226,50 +218,46 @@ class App extends Component {
                     timestamp: newMessage.regdate
                 }
             ]
-        });
+        }));
         this.setScrollPositionToBottom();
     }
     handleClickGoToSignupButton = ()=>{
         console.log('handleClickGoToSignupButton is called..!');
-        this.setState({
-            ...this.state,
+        this.setState((prevState,props)=>({
             hasNoAccount: true
-        });
+        }));
     }
 
     /* Signup Functions */
     handleInputSignupEmail = (event)=>{
         console.log('handleInputSignupEmail is called..!');
         const email = event.target.value;
-        this.setState({
-            ...this.state,
+        this.setState((prevState,props)=>({
             signup: {
-                ...this.state.signup,
+                ...prevState.signup,
                 email
             }
-        });
+        }));
     }
     handleInputSignupPassword = (event)=>{
         console.log('handleInputSignupPassword is called..!');
         const password = event.target.value;
-        this.setState({
-            ...this.state,
+        this.setState((prevState,props)=>({
             signup: {
-                ...this.state.signup,
+                ...prevState.signup,
                 password
             }
-        });
+        }));
     }
     handleInputSignupPasswordAgain = (event)=>{
         console.log('handleInputSignupPasswordAgain is called..!');
         const password2 = event.target.value;
-        this.setState({
-            ...this.state,
+        this.setState((prevState,props)=>({
             signup: {
-                ...this.state.signup,
+                ...prevState.signup,
                 password2
             }
-        });
+        }));
     }
     handleClickSignupButton = async ()=>{
         console.log('handleClickSignupButton is called..!');
@@ -291,15 +279,14 @@ class App extends Component {
             // Notify Success to User
             alert('Confirmation code was sent to your email!!');
             // Reset Signup Data
-            this.setState({
-                ...this.state,
+            this.setState((prevState,props)=>({
                 hasNoAccount: false,
                 signup: {
                     email: '',
                     password: '',
                     password2: ''
                 }
-            });
+            }));
 
         } catch(e) {
             alert(e.message || e);
@@ -307,10 +294,9 @@ class App extends Component {
     }
     handleClickGoToSigninButton = ()=>{
         console.log('handleClickGoToSigninButton is called..!');
-        this.setState({
-            ...this.state,
+        this.setState((prevState,props)=>({
             hasNoAccount: false
-        });
+        }));
     }
     
     /* Keyboard Shortcut Functions */
