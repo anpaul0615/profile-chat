@@ -33,6 +33,7 @@ class App extends Component {
                 secretKey: '',
                 sessionToken: ''
             },
+            chatGroups: [],
             messageGroup: '',
             messageBuffer: '',
             messages: []
@@ -45,6 +46,7 @@ class App extends Component {
     }
     handleClickOpenChatGroupButton = ()=>{
         this.handlePageRouter('/group');
+        this.initChatGroups();
     }
     handleClickCloseChatGroupButton = ()=>{
         this.handlePageRouter('/');
@@ -94,6 +96,33 @@ class App extends Component {
         }));
         // Close Iframe Window
         window.parent.postMessage('chat-off','*');
+    }
+
+    /* Group Functions */
+    initChatGroups = async ()=>{
+        console.log('initChatGroups is called..!');
+        try {
+            const username = this.state.signin.email;
+            const { data:chatGroups } = await this.apigwClient.invokeAPIGateway({
+                path: '/messages/group/search',
+                method: 'GET',
+                queryParams: { username }
+            });
+            this.setState((prevState,props)=>({
+                chatGroups: chatGroups,
+                messageGroup: chatGroups[0]
+            }));
+
+        } catch (e) {
+            console.log(e);
+            alert(e.message || e);
+        }
+    }
+    handleClickChatGroup = (groupName)=>{
+        console.log('handleClickChatGroup is called..!');
+        this.setState((prevState,props)=>({
+            messageGroup: groupName
+        }));
     }
 
     /* Messaging Functions */
@@ -355,6 +384,8 @@ class App extends Component {
                 case '/group':
                     return <ChatGroup
                                 checkAuthentication={this.checkAuthentication}
+                                chatGroups={this.state.chatGroups}
+                                handleClickChatGroup={this.handleClickChatGroup}
                                 handleClickCloseChatGroupButton={this.handleClickCloseChatGroupButton} />;
                 case '/':
                     return <Chat

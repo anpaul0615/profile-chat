@@ -14,12 +14,13 @@ const ChatGroupWrapper = styled.div`
 const ChatGroup = (props)=>{
     const {
         checkAuthentication,
-        handleClickCloseChatGroupButton
+        handleClickCloseChatGroupButton,
+        chatGroups, handleClickChatGroup
     }= props;
     return checkAuthentication()
     ?   <ChatGroupWrapper>
             <ChatGroupHeader handleClickCloseChatGroupButton={handleClickCloseChatGroupButton} />
-            <ChatGroupBody />
+            <ChatGroupBody chatGroups={chatGroups} handleClickChatGroup={handleClickChatGroup} />
         </ChatGroupWrapper>
     :   <p>Unauthenticated..!</p>;
 };

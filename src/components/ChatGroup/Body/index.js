@@ -1,9 +1,10 @@
 import React from 'react';
+import ChatGroupList from './GroupList';
 import styled from "styled-components";
 
 
 /* Style-Wrapper */
-const ChatGroupBodyWrapper = styled.form`
+const ChatGroupBodyWrapper = styled.div`
     width: 100%;
     height: calc(100% - 60px);
     overflow: hidden;
@@ -11,9 +12,12 @@ const ChatGroupBodyWrapper = styled.form`
 `;
 /* Component */
 const ChatGroupBody = (props)=>{
+    const { chatGroups, handleClickChatGroup } = props;
     return (
         <ChatGroupBodyWrapper>
-            "ChatGroupBody"
+            <ChatGroupList
+                chatGroups={chatGroups}
+                handleClickChatGroup={handleClickChatGroup} />
         </ChatGroupBodyWrapper>
     );
 };
