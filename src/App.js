@@ -118,11 +118,34 @@ class App extends Component {
             alert(e.message || e);
         }
     }
-    handleClickChatGroup = (groupName)=>{
-        console.log('handleClickChatGroup is called..!');
-        this.setState((prevState,props)=>({
-            messageGroup: groupName
-        }));
+    handleClickChatGroup = async (groupName)=>{
+        // console.log('handleClickChatGroup is called..!');
+        try {
+            // Get All Message History
+            const { data:messageHistory } = await this.apigwClient.invokeAPIGateway({
+                path: '/messages',
+                method: 'GET',
+                queryParams: { groupname: groupName, startDate: '1000-01-01T00:00:00.000Z' }
+            });
+
+            // Parse Message History
+            const messages = (messageHistory || []).map(e=>({
+                user: e.username === 'anpaul0615@gmail.com' ? 'paul' : e.username,
+                content: e.content,
+                timestamp: e.regdate,
+            }));
+
+            // Update Message History
+            this.setState((prevState,props)=>({
+                currentPath: '/',
+                messageGroup: groupName,
+                messages
+            }));
+
+        } catch (e) {
+            console.log(e);
+            alert(e.message || e);
+        }
     }
 
     /* Messaging Functions */
