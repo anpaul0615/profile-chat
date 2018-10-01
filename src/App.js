@@ -127,14 +127,14 @@ class App extends Component {
                 method: 'GET',
                 queryParams: { groupname: groupName, startDate: '1000-01-01T00:00:00.000Z' }
             });
-
             // Parse Message History
+            const currentUsername = this.state.signin.email;
             const messages = (messageHistory || []).map(e=>({
-                user: e.username === 'anpaul0615@gmail.com' ? 'paul' : e.username,
+                isMine: e.username === currentUsername,
+                username: e.username,
                 content: e.content,
-                timestamp: e.regdate,
+                regdate: e.regdate,
             }));
-
             // Update Message History
             this.setState((prevState,props)=>({
                 currentPath: '/',
@@ -248,10 +248,12 @@ class App extends Component {
             }).catch(e=>e);
 
             // Parse Message History
+            const currentUsername = this.state.signin.email;
             const messages = (messageHistory || []).map(e=>({
-                user: e.username === 'anpaul0615@gmail.com' ? 'paul' : e.username,
+                isMine: e.username === currentUsername,
+                username: e.username,
                 content: e.content,
-                timestamp: e.regdate,
+                regdate: e.regdate,
             }));
 
             // Update Signin State & Message History
@@ -273,13 +275,15 @@ class App extends Component {
     handleRecieveMessage = (messageChunk)=>{
         const oldMessages = this.state.messages;
         const newMessage = JSON.parse(messageChunk.toString());
+        const currentUsername = this.state.signin.email;
         this.setState((prevState,props)=>({
             messages: [
                 ...oldMessages,
                 {
-                    user: newMessage.username === 'anpaul0615@gmail.com' ? 'paul' : newMessage.username,
+                    isMine: newMessage.username === currentUsername,
+                    username: newMessage.username,
                     content: newMessage.content,
-                    timestamp: newMessage.regdate
+                    regdate: newMessage.regdate
                 }
             ]
         }));

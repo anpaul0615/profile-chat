@@ -4,9 +4,9 @@ import styled from 'styled-components';
 
 /* Style-Wrapper */
 const MessageRawWrapper = styled.div`
-    padding-left: ${ props=>props.user==='paul'? '10px':null };
-    padding-right: ${ props=>props.user==='paul'? null:'10px' };
-    text-align: ${ props=>props.user==='paul'? 'left':'right' };
+    padding-left: ${ props=>props.isMine? null:'10px' };
+    padding-right: ${ props=>props.isMine? '10px':null };
+    text-align: ${ props=>props.isMine? 'right':'left' };
 `;
 const MessageBalloonWrapper = styled.div`
     display: inline-block;
@@ -14,9 +14,9 @@ const MessageBalloonWrapper = styled.div`
     margin-bottom: 3px;
     max-width: 230px;
     border-radius: 15px;
-    border-top-left-radius: ${ props=>props.user==='paul'? '3px':null };
-    border-top-right-radius: ${ props=>props.user==='paul'? null:'3px' };
-    text-align: ${ props=>props.user==='paul'? 'left':'right' };
+    border-top-left-radius: ${ props=>props.isMine? null:'3px' };
+    border-top-right-radius: ${ props=>props.isMine? '3px':null };
+    text-align: ${ props=>props.isMine? 'right':'left' };
     font-size: 14px;
     white-space: pre-line;
     word-break: break-word;
@@ -26,10 +26,10 @@ const MessageBalloonWrapper = styled.div`
 `;
 /* Component */
 const Message = (props)=>{
-    const { user, content } = props;
+    const { isMine, content } = props;
     return (
-        <MessageRawWrapper user={user}>
-            <MessageBalloonWrapper user={user}>
+        <MessageRawWrapper isMine={isMine}>
+            <MessageBalloonWrapper isMine={isMine}>
                 <span>{content}</span>
             </MessageBalloonWrapper>
         </MessageRawWrapper>

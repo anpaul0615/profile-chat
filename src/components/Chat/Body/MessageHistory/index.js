@@ -27,10 +27,13 @@ const MessageHistory = (props)=>{
             {
                 messages
                     ?
-                    messages.map((msg,idx)=>
-                        <Message key={`msg-${idx}`}
-                                 user={msg.user}
-                                 content={msg.content} />
+                    messages.map((e,idx)=>
+                        <Message
+                            key={`msg-${idx}`}
+                            isMine={e.isMine}
+                            username={e.username}
+                            content={e.content}
+                            regdate={e.regdate} />
                     )
                     :
                     'no-data'
