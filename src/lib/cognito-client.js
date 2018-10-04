@@ -12,6 +12,38 @@ export default class CognitoClient {
         });
     }
 
+    refreshCredentialsFromStorage() {
+        return new Promise((resolve,reject)=>{
+            // Check Previous-Session-Data Form Cognito-Storage (Localstorage/Cookie)
+            this.cognitoUser = this.userPool.getCurrentUser();
+            if (!this.cognitoUser) {
+                return reject(new Error('Empty Previous Session Data..!'));
+            }
+            // Get Cognito-Session From Cognito-Storage
+            this.cognitoUser.getSession((err,signInUserSession)=>{
+                const idToken = signInUserSession.getIdToken().getJwtToken();
+                const providerKey = `cognito-idp.${COGNITO_CONFIG.region}.amazonaws.com/${COGNITO_CONFIG.UserPoolId}`;
+                const cognitoCredentials = new AWS.CognitoIdentityCredentials({
+                    IdentityPoolId: COGNITO_CONFIG.IdentityPoolId,
+                    Logins : {
+                        [providerKey]: idToken,
+                    }
+                });
+                // Set Cognito Credentials
+                AWS.config.region = COGNITO_CONFIG.region;
+                AWS.config.credentials = cognitoCredentials;
+                // Return Cognito Credentials Data
+                AWS.config.credentials.refresh((err) => {
+                    if (err) return reject(err);
+                    else return resolve({
+                        cognitoCredentials: AWS.config.credentials,
+                        userName: this.cognitoUser.username
+                    });
+                });
+            });
+        });
+    }
+
     getCredentials(username, password) {
         return new Promise((resolve,reject)=>{
             // Init CognitoUser

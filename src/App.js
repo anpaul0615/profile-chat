@@ -28,13 +28,9 @@ class App extends Component {
                 password: '',
                 password2: '',
             },
-            auth: {
-                accessKeyId: '',
-                secretKey: '',
-                sessionToken: ''
-            },
             chatGroups: [],
-            messageGroup: '',
+            currentUserName: '',
+            currentGroupName: '',
             messageBuffer: '',
             messages: []
         };
@@ -87,11 +83,9 @@ class App extends Component {
                 password: '',
                 password2: '',
             },
-            auth: {
-                accessKeyId: '',
-                secretKey: '',
-                sessionToken: ''
-            },
+            currentUserName: '',
+            currentGroupName: '',
+            messageBuffer: '',
             messages: []
         }));
         // Close Iframe Window
@@ -102,15 +96,15 @@ class App extends Component {
     initChatGroups = async ()=>{
         console.log('initChatGroups is called..!');
         try {
-            const username = this.state.signin.email;
+            const { currentUserName } = this.state;
             const { data:chatGroups } = await this.apigwClient.invokeAPIGateway({
                 path: '/messages/group/search',
                 method: 'GET',
-                queryParams: { username }
+                queryParams: { username:currentUserName }
             });
             this.setState((prevState,props)=>({
                 chatGroups: chatGroups,
-                messageGroup: chatGroups[0]
+                currentGroupName: chatGroups[0]
             }));
 
         } catch (e) {
@@ -128,9 +122,9 @@ class App extends Component {
                 queryParams: { groupname: groupName, startDate: '1000-01-01T00:00:00.000Z' }
             });
             // Parse Message History
-            const currentUsername = this.state.signin.email;
+            const currentUserName = this.state.signin.email;
             const messages = (messageHistory || []).map(e=>({
-                isMine: e.username === currentUsername,
+                isMine: e.username === currentUserName,
                 username: e.username,
                 content: e.content,
                 regdate: e.regdate,
@@ -138,7 +132,7 @@ class App extends Component {
             // Update Message History
             this.setState((prevState,props)=>({
                 currentPath: '/',
-                messageGroup: groupName,
+                currentGroupName: groupName,
                 messages
             }));
 
@@ -158,14 +152,14 @@ class App extends Component {
     }
     handleClickMessageSendButton = async ()=>{
         // console.log('handleClickMessageSendButton is called..!');
-        const { messageGroup, messageBuffer } = this.state;
+        const { currentUserName, currentGroupName, messageBuffer } = this.state;
         if (messageBuffer === '') return;
 
         const messageBody = {
-            groupname: messageGroup,
+            groupname: currentGroupName,
             regdate: new Date().toISOString(),
             content: messageBuffer,
-            username: this.state.signin.email
+            username: currentUserName
         };
         await this.apigwClient.invokeAPIGateway({
             path: '/messages',
@@ -181,6 +175,79 @@ class App extends Component {
     }
 
     /* Signin Functions */
+    attachIotPolicy = (identityId)=>{
+        return new PolicyManager().attachUserIdentityToPolicy('iot-chat-policy', identityId);
+    }
+    initMqttConnection = (topic, credentials)=>{
+        this.mqttClient = new MQTTClient(topic, credentials);
+        this.mqttClient.registerRecieveMessageCallback(this.handleRecieveMessage);
+        this.mqttClient.subscribe();
+    }
+    checkMessagGroup = (groupname)=>{
+        return this.apigwClient.invokeAPIGateway({
+                path: '/messages/group',
+                method: 'GET',
+                queryParams: { groupname }
+            })
+            .then(result=>true)
+            .catch(e=>false);
+    }
+    createMessagGroup = (groupname,username)=>{
+        return this.apigwClient.invokeAPIGateway({
+                path: '/messages/group',
+                method: 'POST',
+                body: {
+                    groupname,
+                    userList: [ username, 'anpaul0615@gmail.com' ]
+                }
+            });
+    }
+    getMessageHistory = (groupname)=>{
+        return this.apigwClient.invokeAPIGateway({
+                path: '/messages',
+                method: 'GET',
+                queryParams: { groupname, startDate: '1000-01-01T00:00:00.000Z' }
+            })
+            .then(result=>result.data)
+            .catch(e=>[]);
+    }
+    checkPreviousSessionData = async ()=>{
+        try {
+            // Get Credentials From Previous Session Data
+            const { cognitoCredentials, userName } = await this.cognitoClient.refreshCredentialsFromStorage();
+            // Attach IoT Principal Policy
+            await this.attachIotPolicy(cognitoCredentials.identityId);
+            // Init MQTT Connection
+            this.initMqttConnection(userName, cognitoCredentials);
+            // Check Message Group
+            const currentUserName = userName;
+            const currentGroupName = currentUserName;
+            if (!await this.checkMessagGroup(currentGroupName))
+                await this.createMessagGroup(currentGroupName,currentGroupName);
+            // Get All Message History
+            const messageHistory = await this.getMessageHistory(currentGroupName);
+            console.log("messageHistory :: ", messageHistory);
+            // Parse Message History
+            const messages = (messageHistory || []).map(e=>({
+                isMine: e.username === currentUserName,
+                username: e.username,
+                content: e.content,
+                regdate: e.regdate,
+            }));
+            this.setState((prevState,props)=>({
+                currentPath: '/',
+                isAuthenticated: true,
+                currentUserName,
+                currentGroupName,
+                messages
+            }));
+            // Move Scroll To Bottom
+            this.setScrollPositionToBottom();
+
+        } catch (e) {
+            // console.log(e);
+        }
+    }
     handleInputSigninEmail = (event)=>{
         //console.log('handleInputSigninEmail is called..!');
         const email = event.target.value;
@@ -204,66 +271,34 @@ class App extends Component {
     handleClickSigninButton = async ()=>{
         try {
             // Get Cognito Credentials
-            const { email, password } = this.state.signin;
-            const cognitoCredentials = await this.cognitoClient.getCredentials(email,password);
-            // Update Cognito Credentials To App State
-            this.setState((prevState,props)=>({
-                auth: {
-                    accessKeyId: cognitoCredentials.accessKeyId,
-                    secretAccessKey: cognitoCredentials.secretAccessKey,
-                    sessionToken: cognitoCredentials.sessionToken
-                }
-            }));
-            // Attach Principal Policy
-            const { identityId } = cognitoCredentials;
-            const policyManager = new PolicyManager();
-            await policyManager.attachUserIdentityToPolicy('iot-chat-policy', identityId);
+            const userName = this.state.signin.email.split('@')[0];
+            const cognitoCredentials = await this.cognitoClient.getCredentials(userName, this.state.signin.password);
+            // Attach IoT Principal Policy
+            await this.attachIotPolicy(cognitoCredentials.identityId);
             // Init MQTT Connection
-            this.mqttClient = new MQTTClient(email, cognitoCredentials);
-            this.mqttClient.registerRecieveMessageCallback(this.handleRecieveMessage);
-            this.mqttClient.subscribe();
-            
+            this.initMqttConnection(userName, cognitoCredentials);
             // Check Message Group
-            await this.apigwClient.invokeAPIGateway({
-                path: '/messages/group',
-                method: 'GET',
-                queryParams: { groupname: email }
-            })
-            .catch(e=>
-                this.apigwClient.invokeAPIGateway({
-                    path: '/messages/group',
-                    method: 'POST',
-                    body: {
-                        groupname: email,
-                        userList: [ email, 'anpaul0615@gmail.com' ]
-                    }
-                }).catch(e=>e)
-            );
-
+            const currentUserName = userName;
+            const currentGroupName = currentUserName;
+            if (!await this.checkMessagGroup(currentGroupName))
+                await this.createMessagGroup(currentGroupName,currentGroupName);
             // Get All Message History
-            const { data:messageHistory } = await this.apigwClient.invokeAPIGateway({
-                path: '/messages',
-                method: 'GET',
-                queryParams: { groupname: email, startDate: '1000-01-01T00:00:00.000Z' }
-            }).catch(e=>e);
-
+            const messageHistory = await this.getMessageHistory(currentGroupName);
+            console.log("messageHistory :: ", messageHistory);
             // Parse Message History
-            const currentUsername = this.state.signin.email;
             const messages = (messageHistory || []).map(e=>({
-                isMine: e.username === currentUsername,
+                isMine: e.username === currentUserName,
                 username: e.username,
                 content: e.content,
                 regdate: e.regdate,
             }));
-
-            // Update Signin State & Message History
             this.setState((prevState,props)=>({
                 currentPath: '/',
-                messageGroup: email,
-                messages,
-                isAuthenticated: true
+                isAuthenticated: true,
+                currentUserName,
+                currentGroupName,
+                messages
             }));
-
             // Move Scroll To Bottom
             this.setScrollPositionToBottom();
 
@@ -275,12 +310,12 @@ class App extends Component {
     handleRecieveMessage = (messageChunk)=>{
         const oldMessages = this.state.messages;
         const newMessage = JSON.parse(messageChunk.toString());
-        const currentUsername = this.state.signin.email;
+        const currentUserName = this.state.signin.email;
         this.setState((prevState,props)=>({
             messages: [
                 ...oldMessages,
                 {
-                    isMine: newMessage.username === currentUsername,
+                    isMine: newMessage.username === currentUserName,
                     username: newMessage.username,
                     content: newMessage.content,
                     regdate: newMessage.regdate
@@ -375,6 +410,7 @@ class App extends Component {
     }
     componentDidMount() {
         document.addEventListener('keydown', this.handleKeydown);
+        this.checkPreviousSessionData();
     }
     componentWillUnmount() {
         document.removeEventListener('keydown', this.handleKeydown);
