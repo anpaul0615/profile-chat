@@ -1,16 +1,10 @@
 import IOT_CONFIG from '../configs/aws.iot.json';
 import AWSIoTDeviceSDK from 'aws-iot-device-sdk';
 
-let instance = null;
-
 export default class MQTTClient {
 
     constructor(email, credentials) {
-        if (instance) {
-          return instance;
-        }
-        // Set Default Properties
-        instance = this;
+        this.mqtt = this;
         this.topic = email;
         this.clientId = email;
         this.credentials = credentials;
@@ -19,7 +13,7 @@ export default class MQTTClient {
 
     async initClient() {
         // Init IoT Client
-        instance = AWSIoTDeviceSDK.device({
+        this.mqtt = AWSIoTDeviceSDK.device({
             region: IOT_CONFIG.region,
             host: IOT_CONFIG.endpoint,
             clientId: this.clientId,
@@ -31,22 +25,22 @@ export default class MQTTClient {
             sessionToken: this.credentials.sessionToken
         });
         // Set IoT Client Event Listener
-        instance.on('connect', (result)=>{
+        this.mqtt.on('connect', (result)=>{
             console.log('mqtt#connect..');
         });
-        instance.on('reconnect', (result)=>{
+        this.mqtt.on('reconnect', (result)=>{
             console.log('mqtt#reconnect..');
         });
-        instance.on('offline', (result) => {
+        this.mqtt.on('offline', (result) => {
             console.log('mqtt#offline..');
         });
-        instance.on('error', (err) => {
+        this.mqtt.on('error', (err) => {
             console.log('mqtt#error..');
         });
     }
 
     registerRecieveMessageCallback(handleRecieveMessage) {
-        instance.on('message', (topic, messageChunk) => {
+        this.mqtt.on('message', (topic, messageChunk) => {
             console.log('mqtt#message..');
             handleRecieveMessage(messageChunk.toString());
         });
@@ -54,7 +48,7 @@ export default class MQTTClient {
 
     publish(message) {
         return new Promise((resolve,reject)=>{
-            instance.publish(this.topic, message, null, (err)=>{
+            this.mqtt.publish(this.topic, message, null, (err)=>{
                 if (err) reject(err);
                 else resolve();
             });
@@ -63,7 +57,7 @@ export default class MQTTClient {
 
     subscribe() {
         return new Promise((resolve,reject)=>{
-            instance.subscribe(this.topic, null, (err,granted)=>{
+            this.mqtt.subscribe(this.topic, null, (err,granted)=>{
                 if (err) reject(err);
                 else resolve(granted);
             });
@@ -72,7 +66,7 @@ export default class MQTTClient {
 
     unsubscribe() {
         return new Promise((resolve,reject)=>{
-            instance.unsubscribe(this.topic, (err)=>{
+            this.mqtt.unsubscribe(this.topic, (err)=>{
                 if (err) reject(err);
                 else resolve();
             });
@@ -80,7 +74,7 @@ export default class MQTTClient {
     }
 
     disconnect(){
-        instance.end();
-        instance = null;
+        this.mqtt.end();
+        this.mqtt = null;
     }
 }
