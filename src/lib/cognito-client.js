@@ -37,6 +37,7 @@ export default class CognitoClient {
                     if (err) return reject(err);
                     else return resolve({
                         cognitoCredentials: AWS.config.credentials,
+                        identityId: AWS.config.credentials.identityId,
                         userName: this.cognitoUser.username
                     });
                 });
@@ -44,16 +45,16 @@ export default class CognitoClient {
         });
     }
 
-    getCredentials(username, password) {
+    getCredentials(userName, password) {
         return new Promise((resolve,reject)=>{
             // Init CognitoUser
             this.cognitoUser = new CognitoIdentity.CognitoUser({
-                Username : username,
+                Username : userName,
                 Pool : this.userPool
             });
             // Init AuthenticationDetails
             this.authenticationDetails = new CognitoIdentity.AuthenticationDetails({
-                Username : username,
+                Username : userName,
                 Password : password
             });
             // Authenticate Cognito User
@@ -87,7 +88,7 @@ export default class CognitoClient {
     registerNewAccount(email, password) {
         return new Promise((resolve,reject)=>{
             // Set Attributes
-            const username = email.split('@')[0];
+            const userName = email.split('@')[0];
             const attributeList = [
                 new CognitoIdentity.CognitoUserAttribute({
                     Name: 'email',
@@ -95,12 +96,12 @@ export default class CognitoClient {
                 }),
                 new CognitoIdentity.CognitoUserAttribute({
                     Name: 'name',
-                    Value: username,
+                    Value: userName,
                 })
             ];
-            this.userPool.signUp(username, password, attributeList, null, (err,result)=>{
+            this.userPool.signUp(userName, password, attributeList, null, (err,result)=>{
                 if (err) return reject(err);
-                else return resolve({ username: result.user.getUsername() });
+                else return resolve({ userName: result.user.getUsername() });
             });
         });
     }

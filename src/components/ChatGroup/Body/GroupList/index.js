@@ -17,8 +17,8 @@ const ChatGroupList = (props)=>{
         <ChatGroupListWrapper>
             {chatGroups.map(group=> 
                 <ChatGroupListItem
-                    key={group.groupname}
-                    groupName={group.groupname}
+                    key={group.groupName}
+                    groupName={group.groupName}
                     groupNickName={group.groupnickname}
                     lastMessage={group.lastMessage}
                     handleClickChatGroup={handleClickChatGroup} />

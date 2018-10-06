@@ -31,9 +31,9 @@ const MessageHistory = (props)=>{
                         <Message
                             key={`msg-${idx}`}
                             isMine={e.isMine}
-                            username={e.username}
+                            userName={e.userName}
                             content={e.content}
-                            regdate={e.regdate} />
+                            regDate={e.regDate} />
                     )
                     :
                     'no-data'
