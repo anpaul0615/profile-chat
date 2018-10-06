@@ -60,7 +60,6 @@ class App extends Component {
 
     /* Signout Functions */
     handleClickAppExitButton = ()=>{
-        console.log('handleClickAppExitButton is called..!');
         // Confirm Signout
         if ( !window.confirm('Signout Now?') ) {
             return;
@@ -94,7 +93,6 @@ class App extends Component {
 
     /* Group Functions */
     initChatGroups = async ()=>{
-        console.log('initChatGroups is called..!');
         try {
             const { currentUserName } = this.state;
             const { data:chatGroups } = await this.apigwClient.invokeAPIGateway({
@@ -109,11 +107,9 @@ class App extends Component {
 
         } catch (e) {
             console.log(e);
-            alert(e.message || e);
         }
     }
     handleClickChatGroup = async (groupName)=>{
-        // console.log('handleClickChatGroup is called..!');
         try {
             // Get All Message History
             const { data:messageHistory } = await this.apigwClient.invokeAPIGateway({
@@ -144,14 +140,12 @@ class App extends Component {
 
     /* Messaging Functions */
     handleChangeInputText = (event)=>{
-        // console.log('handleChangeInputText is called..!');
         const messageBuffer = event.target.value;
         this.setState((prevState,props)=>({
             messageBuffer
         }));
     }
     handleClickMessageSendButton = async ()=>{
-        // console.log('handleClickMessageSendButton is called..!');
         const { currentUserName, currentGroupName, messageBuffer } = this.state;
         if (messageBuffer === '') return;
 
@@ -226,7 +220,6 @@ class App extends Component {
                 await this.createMessagGroup(currentGroupName,currentGroupName);
             // Get All Message History
             const messageHistory = await this.getMessageHistory(currentGroupName);
-            console.log("messageHistory :: ", messageHistory);
             // Parse Message History
             const messages = (messageHistory || []).map(e=>({
                 isMine: e.username === currentUserName,
@@ -245,11 +238,10 @@ class App extends Component {
             this.setScrollPositionToBottom();
 
         } catch (e) {
-            // console.log(e);
+            console.log(e);
         }
     }
     handleInputSigninEmail = (event)=>{
-        //console.log('handleInputSigninEmail is called..!');
         const email = event.target.value;
         this.setState((prevState,props)=>({
             signin: {
@@ -259,7 +251,6 @@ class App extends Component {
         }));
     }
     handleInputSigninPassword = (event)=>{
-        //console.log('handleInputSigninPassword is called..!');
         const password = event.target.value;
         this.setState((prevState,props)=>({
             signin: {
@@ -284,7 +275,6 @@ class App extends Component {
                 await this.createMessagGroup(currentGroupName,currentGroupName);
             // Get All Message History
             const messageHistory = await this.getMessageHistory(currentGroupName);
-            console.log("messageHistory :: ", messageHistory);
             // Parse Message History
             const messages = (messageHistory || []).map(e=>({
                 isMine: e.username === currentUserName,
@@ -302,8 +292,8 @@ class App extends Component {
             // Move Scroll To Bottom
             this.setScrollPositionToBottom();
 
-        } catch(e) {
-            // console.log(e);
+        } catch (e) {
+            console.log(e);
             alert(e.message || e);
         }
     }
@@ -325,7 +315,6 @@ class App extends Component {
         this.setScrollPositionToBottom();
     }
     handleClickGoToSignupButton = ()=>{
-        console.log('handleClickGoToSignupButton is called..!');
         this.setState((prevState,props)=>({
             hasNoAccount: true
         }));
@@ -333,7 +322,6 @@ class App extends Component {
 
     /* Signup Functions */
     handleInputSignupEmail = (event)=>{
-        console.log('handleInputSignupEmail is called..!');
         const email = event.target.value;
         this.setState((prevState,props)=>({
             signup: {
@@ -343,7 +331,6 @@ class App extends Component {
         }));
     }
     handleInputSignupPassword = (event)=>{
-        console.log('handleInputSignupPassword is called..!');
         const password = event.target.value;
         this.setState((prevState,props)=>({
             signup: {
@@ -353,7 +340,6 @@ class App extends Component {
         }));
     }
     handleInputSignupPasswordAgain = (event)=>{
-        console.log('handleInputSignupPasswordAgain is called..!');
         const password2 = event.target.value;
         this.setState((prevState,props)=>({
             signup: {
@@ -363,8 +349,6 @@ class App extends Component {
         }));
     }
     handleClickSignupButton = async ()=>{
-        console.log('handleClickSignupButton is called..!');
-
         // Check Validation
         const { email, password, password2 } = this.state.signup;
         if (!/^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4}$/.test(email)) {
@@ -377,8 +361,7 @@ class App extends Component {
         // Register New Account
         try {
             // Get Cognito Credentials
-            const result = await this.cognitoClient.registerNewAccount(email,password);
-            console.log(result);
+            await this.cognitoClient.registerNewAccount(email,password);
             // Notify Success to User
             alert('Confirmation code was sent to your email!!');
             // Reset Signup Data
@@ -391,12 +374,12 @@ class App extends Component {
                 }
             }));
 
-        } catch(e) {
+        } catch (e) {
+            console.log(e);
             alert(e.message || e);
         }
     }
     handleClickGoToSigninButton = ()=>{
-        console.log('handleClickGoToSigninButton is called..!');
         this.setState((prevState,props)=>({
             hasNoAccount: false
         }));

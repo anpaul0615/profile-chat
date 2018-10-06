@@ -32,34 +32,27 @@ export default class MQTTClient {
         });
         // Set IoT Client Event Listener
         instance.on('connect', (result)=>{
-            console.log('event#connect..');
-            console.log(result);
+            console.log('mqtt#connect..');
         });
         instance.on('reconnect', (result)=>{
-            console.log('event#reconnect..');
-            console.log(result);
+            console.log('mqtt#reconnect..');
         });
         instance.on('offline', (result) => {
-            console.log('event#offline..');
-            console.log(result);
+            console.log('mqtt#offline..');
         });
         instance.on('error', (err) => {
-            console.log('event#error..');
-            console.log(err);
+            console.log('mqtt#error..');
         });
     }
 
     registerRecieveMessageCallback(handleRecieveMessage) {
         instance.on('message', (topic, messageChunk) => {
-            console.log('event#message..');
-            console.log('> topic : ', topic.toString());
-            console.log('> messageChunk : ', messageChunk.toString());
+            console.log('mqtt#message..');
             handleRecieveMessage(messageChunk.toString());
         });
     }
 
     publish(message) {
-        console.log(message);
         return new Promise((resolve,reject)=>{
             instance.publish(this.topic, message, null, (err)=>{
                 if (err) reject(err);
