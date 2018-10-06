@@ -3,6 +3,12 @@ import encHex from "crypto-js/enc-hex";
 import HmacSHA256 from "crypto-js/hmac-sha256";
 
 const sigV4Client = {};
+
+/* IE11 URL Polyfill */
+sigV4Client.util = {
+  url: require('url')
+}
+
 sigV4Client.newClient = function(config) {
   const AWS_SHA_256 = "AWS4-HMAC-SHA256";
   const AWS4_REQUEST = "aws4_request";
@@ -212,8 +218,12 @@ sigV4Client.newClient = function(config) {
       .replace(/\.\d{3}Z$/, "Z")
       .replace(/[:-]|\.\d{3}/g, "");
     headers[X_AMZ_DATE] = datetime;
-    let parser = new URL(awsSigV4Client.endpoint);
+
+    /* IE11 URL Polyfill */
+    let parser = sigV4Client.util.url.parse(awsSigV4Client.endpoint);
     headers[HOST] = parser.hostname;
+    // let parser = new URL(awsSigV4Client.endpoint);
+    // headers[HOST] = parser.hostname;
 
     let canonicalRequest = buildCanonicalRequest(
       verb,
