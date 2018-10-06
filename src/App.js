@@ -66,6 +66,8 @@ class App extends Component {
         }
         // Signout Cognito Connection
         this.cognitoClient.signout();
+        // Clear Cognito Storage
+        this.cognitoClient.clearStorage();
         // Disconnect MQTT Connection
         this.mqttClient.disconnect();
         // Clear All States
@@ -262,6 +264,8 @@ class App extends Component {
     }
     handleClickSigninButton = async ()=>{
         try {
+            // Clear Cognito Storage
+            this.cognitoClient.clearStorage();
             // Get Cognito Credentials
             const userName = this.state.signin.email.split('@')[0];
             const cognitoCredentials = await this.cognitoClient.getCredentials(userName, this.state.signin.password);

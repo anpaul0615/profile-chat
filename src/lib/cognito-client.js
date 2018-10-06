@@ -12,6 +12,11 @@ export default class CognitoClient {
         });
     }
 
+    clearStorage() {
+        if (this.userPool.storage.length !== 0)
+            this.userPool.storage.clear();
+    }
+
     refreshCredentialsFromStorage() {
         return new Promise((resolve,reject)=>{
             // Check Previous-Session-Data Form Cognito-Storage (Localstorage/Cookie)
