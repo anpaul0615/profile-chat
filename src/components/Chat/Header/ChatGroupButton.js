@@ -3,7 +3,7 @@ import styled from "styled-components";
 
 
 /* Style-Wrapper */
-const ConfigButtonWrapper = styled.div`
+const ChatGroupButtonWrapper = styled.div`
     position: absolute;
     top: 0;
     left: 0;
@@ -25,8 +25,8 @@ const ConfigButtonWrapper = styled.div`
     }
 `;
 /* Component */
-const ConfigButton = (props)=>{
-    const { handleClickOpenConfigButton } = props;
-    return <ConfigButtonWrapper onClick={()=>handleClickOpenConfigButton()} />;
+const ChatGroupButton = (props)=>{
+    const { handleClickOpenChatGroupButton } = props;
+    return <ChatGroupButtonWrapper onClick={()=>handleClickOpenChatGroupButton()} />;
 };
-export default ConfigButton;
+export default ChatGroupButton;

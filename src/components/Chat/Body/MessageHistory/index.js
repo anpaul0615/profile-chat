@@ -12,23 +12,28 @@ const MessageHistoryWrapper = styled.div`
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
     background-color: #FFFFFF;
+    box-sizing: content-box;
+    -webkit-box-sizing: content-box;
 `;
 const ScrollWrapper = styled.div`
     height: auto;
 `;
 /* Component */
 const MessageHistory = (props)=>{
-    const { messages } = props;
+    const { messages, setScollDiv } = props;
     return(
         <MessageHistoryWrapper>
-            <ScrollWrapper>
+            <ScrollWrapper innerRef={el=>setScollDiv(el)} >
             {
                 messages
                     ?
-                    messages.map((msg,idx)=>
-                        <Message key={`msg-${idx}`}
-                                 user={msg.user}
-                                 content={msg.content} />
+                    messages.map((e,idx)=>
+                        <Message
+                            key={`msg-${idx}`}
+                            isMine={e.isMine}
+                            userName={e.userName}
+                            content={e.content}
+                            regDate={e.regDate} />
                     )
                     :
                     'no-data'

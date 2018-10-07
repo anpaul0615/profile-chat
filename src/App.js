@@ -1,203 +1,464 @@
-import APIConfig from './configs/api.config.json';
 import React, {Component} from 'react';
-import Axios from 'axios';
 import './App.css';
-import ChatHeader from './components/ChatHeader';
-import ChatBody from './components/ChatBody';
-import ChatConfigHeader from "./components/ChatConfigHeader";
-import ChatConfigBody from "./components/ChatConfigBody";
+import ChatSignature from './components/ChatSignature';
+import Chat from './components/Chat';
+import ChatGroup from './components/ChatGroup';
+
+import CognitoClient from './lib/cognito-client';
+import MQTTClient from './lib/mqtt-client';
+import PolicyManager from './lib/policy-manager';
+import APIGatewayClient from './lib/apigateway-client';
 
 class App extends Component {
     constructor(){
         super();
+        this.apigwClient = new APIGatewayClient();
+        this.cognitoClient = new CognitoClient();
         this.inputFetchingTimer = null;
         this.state = {
-            isConfigMode: false,
-            chatMode: {
-                messages: [
-                    {
-                        user: 'paul',
-                        content: 'aaa',
-                        timestamp: 'yyyy-mm-dd hh:mm:ss'
-                    },
-                    {
-                        user: 'guest',
-                        content: 'bbb',
-                        timestamp: 'yyyy-mm-dd hh:mm:ss'
-                    },
-                    {
-                        user: 'guest',
-                        content: 'ccc',
-                        timestamp: 'yyyy-mm-dd hh:mm:ss'
-                    },
-                    {
-                        user: 'paul',
-                        content: 'Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry\'s standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum.',
-                        timestamp: 'yyyy-mm-dd hh:mm:ss'
-                    },
-                    {
-                        user: 'guest',
-                        content: 'Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry\'s standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum.',
-                        timestamp: 'yyyy-mm-dd hh:mm:ss'
-                    }
-                ],
+            currentPath: '/',
+            isAuthenticated: false,
+            hasNoAccount: false,
+            signin: {
+                email: '',
+                password: '',
             },
-            configMode: {
-                isFetching: false,
-                userAccessCode: '',
-                userName: '',
-                userContact: ''
-            }
+            signup: {
+                email: '',
+                password: '',
+                password2: '',
+            },
+            chatGroups: [],
+            currentUser: '',
+            currentGroup: '',
+            messageBuffer: '',
+            messages: []
         };
     }
 
-    getUserInfo = async (accessCode)=>{
-        try {
-            // before
-            this.setState({
-                ...this.state,
-                configMode: {
-                    ...this.state.configMode,
-                    isFetching: true
-                }
-            });
-            // fetching
-            const { data } = await Axios({
-                url: '/auth/users',
-                method: 'GET',
-                baseURL: APIConfig.endpoint,
-                headers: { accessCode }
-            }).then(result=>result.data);
-            // done
-            this.setState({
-                ...this.state,
-                configMode: {
-                    ...this.state.configMode,
-                    isFetching: false,
-                    userAccessCode: accessCode,
-                    userName: data.userName,
-                    userContact: data.userContact
-                }
-            });
-
-        } catch(e) {
-            console.log(e);
-            this.setState({
-                ...this.state,
-                configMode: {
-                    ...this.state.configMode,
-                    isFetching: false
-                }
-            });
+    /* Page Router */
+    handlePageRouter = (path)=>{
+        this.setState((prevState,props)=>({ currentPath: path }));
+    }
+    handleClickOpenChatGroupButton = ()=>{
+        this.handlePageRouter('/group');
+        this.initChatGroups();
+    }
+    handleClickCloseChatGroupButton = ()=>{
+        this.handlePageRouter('/');
+    }
+    checkAuthentication = ()=>{
+        const { isAuthenticated }= this.state;
+        if (!isAuthenticated) {
+            this.setState((prevState,props)=>({
+                currentPath: '/auth'
+            }));
+            return false;
         }
+        return true;
     }
 
-    handleClickOpenConfigButton = ()=>{
-        console.log('handleClickOpenConfigButton is called..!');
-        this.setState({
-            ...this.state,
-            isConfigMode: true
-        });
-    }
-    handleClickExitButton = ()=>{
-        console.log('handleClickExitButton is called..!');
+    /* Signout Functions */
+    handleClickAppExitButton = ()=>{
+        // Confirm Signout
+        if ( !window.confirm('Signout Now?') ) {
+            return;
+        }
+        // Signout Cognito Connection
+        this.cognitoClient.signout();
+        // Clear Cognito Storage
+        this.cognitoClient.clearStorage();
+        // Disconnect MQTT Connection
+        this.mqttClient.disconnect();
+        // Clear All States
+        this.setState((prevState,props)=>({
+            currentPath: '/auth',
+            isAuthenticated: false,
+            hasNoAccount: false,
+            signin: {
+                email: '',
+                password: '',
+            },
+            signup: {
+                email: '',
+                password: '',
+                password2: '',
+            },
+            currentUser: '',
+            currentGroup: '',
+            messageBuffer: '',
+            messages: []
+        }));
+        // Close Iframe Window
         window.parent.postMessage('chat-off','*');
     }
-    handleClickCloseConfigButton = ()=>{
-        console.log('handleClickCloseConfigButton is called..!');
-        this.setState({
-            ...this.state,
-            isConfigMode: false
-        });
-    }
-    handleChangeUserAccessCode = (userAccessCode)=>{
-        if (this.inputFetchingTimer) {
-            clearTimeout(this.inputFetchingTimer);
-        }
-        this.inputFetchingTimer = setTimeout(()=>{
-            this.getUserInfo(userAccessCode);
-        }, 1000);
-    }
-    handleClickRequestButton = async ()=>{
-        const userName = window.prompt('Please enter your name: (ex. Paul An)', '');
-        if (!userName) return;
 
-        const userContact = window.prompt('Please enter your contact: (ex. anpaul0615@gmail.com)', '');
-        if (!userContact) return;
+    /* Group Functions */
+    initChatGroups = async ()=>{
+        try {
+            const { currentUser } = this.state;
+            const { data:chatGroups } = await this.apigwClient.invokeAPIGateway({
+                path: '/messages/group/search',
+                method: 'GET',
+                queryParams: { userName: currentUser }
+            });
+            this.setState((prevState,props)=>({
+                chatGroups: chatGroups
+            }));
 
-        const isConfirm = window.confirm('Request access-code now?');
-        if (isConfirm) {
-            try {
-                await Axios({
-                    url: '/auth/users',
-                    method: 'POST',
-                    baseURL: APIConfig.endpoint,
-                    data: {
-                        userName,
-                        userContact
-                    }
-                }).then(result=>result.data);
-
-            } catch(e) {
-                const { userAccessCode, userName, userContact } = e.response.data.data;
-                if (userAccessCode) {
-                    let msg = 'Already registered..!\n\n';
-                    msg += `Access Code : ${userAccessCode}\n`;
-                    msg += `Name : ${userName}\n`;
-                    msg += `Contact : ${userContact}\n`;
-                    alert(msg);
-                } else {
-                    alert('Unexpected Error..!');
-                }
-            }
+        } catch (e) {
+            console.log(e);
         }
     }
+    handleClickChatGroup = async (groupId)=>{
+        try {
+            // Get All Message History
+            const { data:messageHistory } = await this.apigwClient.invokeAPIGateway({
+                path: '/messages',
+                method: 'GET',
+                queryParams: { groupId, startDate: '1000-01-01T00:00:00.000Z' }
+            });
+            // Parse Message History
+            const currentUser = this.state.currentUser;
+            const messages = (messageHistory || []).map(e=>({
+                isMine: e.userName === currentUser,
+                userName: e.userName,
+                content: e.content,
+                regDate: e.regDate,
+            }));
+            // Change Message Group Subscribe
+            const oldGroupId = this.state.currentGroup;
+            await this.mqttClient.unsubscribe(oldGroupId);
+            await this.mqttClient.subscribe(groupId);
+            // Update Message History
+            this.setState((prevState,props)=>({
+                currentPath: '/',
+                currentGroup: groupId,
+                messages
+            }));
 
+        } catch (e) {
+            console.log(e);
+            alert(e.message || e);
+        }
+    }
+
+    /* Messaging Functions */
     handleChangeInputText = (event)=>{
-        console.log('handleChangeInputText is called..!');
-        console.log(event.target.value);
-        // alert('change!');
+        const messageBuffer = event.target.value;
+        this.setState((prevState,props)=>({
+            messageBuffer
+        }));
     }
-    handleClickMessageSendButton = ()=>{
-        console.log('handleClickMessageSendButton is called..!');
-        alert('click!');
+    handleClickMessageSendButton = async ()=>{
+        const { currentUser, currentGroup, messageBuffer } = this.state;
+        if (messageBuffer === '') return;
+        try {
+            // Send Message to Database
+            const messageBody = {
+                groupId: currentGroup,
+                regDate: new Date().toISOString(),
+                content: messageBuffer,
+                userName: currentUser
+            };
+            await this.apigwClient.invokeAPIGateway({
+                path: '/messages',
+                method: 'POST',
+                body: messageBody
+            }).catch(e=>e);
+            // Send Message to MQTT
+            await this.mqttClient.publish(currentGroup, JSON.stringify(messageBody));
+            // Clear MessageBuffer
+            this.setState((prevState,props)=>({
+                messageBuffer: ''
+            }));
+
+        } catch (e) {
+            console.log(e);
+        }
+    }
+
+    /* Signin Functions */
+    attachIotPolicy = (identityId)=>{
+        return new PolicyManager().attachUserIdentityToPolicy('iot-chat-policy', identityId);
+    }
+    checkMessageGroup = (groupId)=>{
+        return this.apigwClient.invokeAPIGateway({
+                path: '/messages/group',
+                method: 'GET',
+                queryParams: { groupId }
+            })
+            .then(()=>true)
+            .catch(()=>false);
+    }
+    createMessageGroup = (groupId,userName)=>{
+        return this.apigwClient.invokeAPIGateway({
+                path: '/messages/group',
+                method: 'POST',
+                body: {
+                    groupId,
+                    groupName: userName,
+                    groupUsers: [ userName, 'anpaul0615' ]
+                }
+            });
+    }
+    getMessageHistory = (groupId)=>{
+        return this.apigwClient.invokeAPIGateway({
+                path: '/messages',
+                method: 'GET',
+                queryParams: { groupId, startDate: '1000-01-01T00:00:00.000Z' }
+            })
+            .then(result=>result.data)
+            .catch(e=>[]);
+    }
+    checkPreviousSessionData = async ()=>{
+        try {
+            // Get Credentials From Previous Session Data
+            const { cognitoCredentials, identityId, userName } = await this.cognitoClient.refreshCredentialsFromStorage();
+            // Attach IoT Principal Policy
+            await this.attachIotPolicy(identityId);
+            // Check Message Group
+            const currentUser = userName;
+            const currentGroup = currentUser;
+            if (!await this.checkMessageGroup(currentGroup))
+                await this.createMessageGroup(currentGroup,currentUser);
+            // Get All Message History
+            const messageHistory = await this.getMessageHistory(currentGroup);
+            // Parse Message History
+            const messages = (messageHistory || []).map(e=>({
+                isMine: e.userName === currentUser,
+                userName: e.userName,
+                content: e.content,
+                regDate: e.regDate,
+            }));
+            this.setState((prevState,props)=>({
+                currentPath: '/',
+                isAuthenticated: true,
+                currentUser,
+                currentGroup,
+                messages
+            }));
+            // Init MQTT Connection
+            this.mqttClient = new MQTTClient(cognitoCredentials, currentUser, this.handleRecieveMessage);
+            // Subscribe Message Group
+            await this.mqttClient.subscribe(currentGroup);
+            // Move Scroll To Bottom
+            this.setScrollPositionToBottom();
+
+        } catch (e) {
+            console.log(e);
+        }
+    }
+    handleInputSigninEmail = (event)=>{
+        const email = event.target.value;
+        this.setState((prevState,props)=>({
+            signin: {
+                ...prevState.signin,
+                email
+            }
+        }));
+    }
+    handleInputSigninPassword = (event)=>{
+        const password = event.target.value;
+        this.setState((prevState,props)=>({
+            signin: {
+                ...prevState.signin,
+                password
+            }
+        }));
+    }
+    handleClickSigninButton = async ()=>{
+        try {
+            // Clear Cognito Storage
+            this.cognitoClient.clearStorage();
+            // Get Cognito Credentials
+            const userName = this.state.signin.email.split('@')[0];
+            const cognitoCredentials = await this.cognitoClient.getCredentials(userName, this.state.signin.password);
+            // Attach IoT Principal Policy
+            await this.attachIotPolicy(cognitoCredentials.identityId);
+            // Check Message Group
+            const currentUser = userName;
+            const currentGroup = currentUser;
+            if (!await this.checkMessageGroup(currentGroup))
+                await this.createMessageGroup(currentGroup,currentUser);
+            // Get All Message History
+            const messageHistory = await this.getMessageHistory(currentGroup);
+            // Parse Message History
+            const messages = (messageHistory || []).map(e=>({
+                isMine: e.userName === currentUser,
+                userName: e.userName,
+                content: e.content,
+                regDate: e.regDate,
+            }));
+            this.setState((prevState,props)=>({
+                currentPath: '/',
+                isAuthenticated: true,
+                currentUser,
+                currentGroup,
+                messages
+            }));
+            // Init MQTT Connection
+            this.mqttClient = new MQTTClient(cognitoCredentials, currentUser, this.handleRecieveMessage);
+            // Subscribe Message Group
+            await this.mqttClient.subscribe(currentGroup);
+            // Move Scroll To Bottom
+            this.setScrollPositionToBottom();
+
+        } catch (e) {
+            console.log(e);
+            alert(e.message || e);
+        }
+    }
+    handleRecieveMessage = (messageChunk)=>{
+        const oldMessages = this.state.messages;
+        const newMessage = JSON.parse(messageChunk.toString());
+        const { currentUser } = this.state;
+        this.setState((prevState,props)=>({
+            messages: [
+                ...oldMessages,
+                {
+                    isMine: newMessage.userName === currentUser,
+                    userName: newMessage.userName,
+                    content: newMessage.content,
+                    regDate: newMessage.regDate
+                }
+            ]
+        }));
+        this.setScrollPositionToBottom();
+    }
+    handleClickGoToSignupButton = ()=>{
+        this.setState((prevState,props)=>({
+            hasNoAccount: true
+        }));
+    }
+
+    /* Signup Functions */
+    handleInputSignupEmail = (event)=>{
+        const email = event.target.value;
+        this.setState((prevState,props)=>({
+            signup: {
+                ...prevState.signup,
+                email
+            }
+        }));
+    }
+    handleInputSignupPassword = (event)=>{
+        const password = event.target.value;
+        this.setState((prevState,props)=>({
+            signup: {
+                ...prevState.signup,
+                password
+            }
+        }));
+    }
+    handleInputSignupPasswordAgain = (event)=>{
+        const password2 = event.target.value;
+        this.setState((prevState,props)=>({
+            signup: {
+                ...prevState.signup,
+                password2
+            }
+        }));
+    }
+    handleClickSignupButton = async ()=>{
+        // Check Validation
+        const { email, password, password2 } = this.state.signup;
+        if (!/^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4}$/.test(email)) {
+            return alert('Email Format is Invalid..!');
+        }
+        if (password !== password2) {
+            return alert('Password Confirm is not matched..!');
+        }
+
+        // Register New Account
+        try {
+            // Get Cognito Credentials
+            await this.cognitoClient.registerNewAccount(email,password);
+            // Notify Success to User
+            alert('Confirmation code was sent to your email!!');
+            // Reset Signup Data
+            this.setState((prevState,props)=>({
+                hasNoAccount: false,
+                signup: {
+                    email: '',
+                    password: '',
+                    password2: ''
+                }
+            }));
+
+        } catch (e) {
+            console.log(e);
+            alert(e.message || e);
+        }
+    }
+    handleClickGoToSigninButton = ()=>{
+        this.setState((prevState,props)=>({
+            hasNoAccount: false
+        }));
+    }
+    
+    /* Keyboard Shortcut Functions */
+    handleKeydown = (event)=>{
+        if (event.keyCode===13 && event.ctrlKey) {
+            this.handleClickMessageSendButton();
+        }
+    }
+    componentDidMount() {
+        document.addEventListener('keydown', this.handleKeydown);
+        this.checkPreviousSessionData();
+    }
+    componentWillUnmount() {
+        document.removeEventListener('keydown', this.handleKeydown);
+    }
+
+    /* Scroll Handle Functions */
+    setScollDiv = (el)=>{
+        this.scrollDiv = el;
+    }
+    setScrollPositionToBottom = ()=>{
+        if (this.scrollDiv) {
+            this.scrollDiv.scrollIntoView(false);
+        }
     }
 
     render() {
-        const { isConfigMode } = this.state;
-        const { userName, userContact } = this.state.configMode;
         return (
             <div className="App">
-                {
-                    isConfigMode
-                        ?
-                        [
-                            <ChatConfigHeader
-                                key={'ChatConfigHeader'}
-                                handleClickCloseConfigButton={this.handleClickCloseConfigButton} />,
-                            <ChatConfigBody
-                                key={'ChatConfigBody'}
-                                userName={userName}
-                                userContact={userContact}
-                                handleChangeUserAccessCode={this.handleChangeUserAccessCode}
-                                handleChangeUserName={this.handleChangeUserName}
-                                handleChangeUserContact={this.handleChangeUserContact}
-                                handleClickRequestButton={this.handleClickRequestButton} />
-                        ]
-                        :
-                        [
-                            <ChatHeader
-                                key={'ChatHeader'}
-                                handleClickOpenConfigButton={this.handleClickOpenConfigButton}
-                                handleClickExitButton={this.handleClickExitButton} />,
-                            <ChatBody
-                                key={'ChatBody'}
-                                messages={this.state.chatMode.messages}
+            {(()=>{
+                switch(this.state.currentPath) {
+                case '/auth':
+                    return <ChatSignature
+                                key={'ChatSignature'}
+                                hasNoAccount={this.state.hasNoAccount}
+                                handleInputSigninEmail={this.handleInputSigninEmail}
+                                handleInputSigninPassword={this.handleInputSigninPassword}
+                                handleClickSigninButton={this.handleClickSigninButton}
+                                handleClickGoToSignupButton={this.handleClickGoToSignupButton}
+                                handleInputSignupEmail={this.handleInputSignupEmail}
+                                handleInputSignupPassword={this.handleInputSignupPassword}
+                                handleInputSignupPasswordAgain={this.handleInputSignupPasswordAgain}
+                                handleClickSignupButton={this.handleClickSignupButton}
+                                handleClickGoToSigninButton={this.handleClickGoToSigninButton} />;
+                case '/group':
+                    return <ChatGroup
+                                checkAuthentication={this.checkAuthentication}
+                                chatGroups={this.state.chatGroups}
+                                handleClickChatGroup={this.handleClickChatGroup}
+                                handleClickCloseChatGroupButton={this.handleClickCloseChatGroupButton} />;
+                case '/':
+                    return <Chat
+                                checkAuthentication={this.checkAuthentication}
+                                messages={this.state.messages}
+                                messageBuffer={this.state.messageBuffer}
+                                handleClickAppExitButton={this.handleClickAppExitButton}
+                                handleClickOpenChatGroupButton={this.handleClickOpenChatGroupButton}
                                 handleChangeInputText={this.handleChangeInputText}
-                                handleClickMessageSendButton={this.handleClickMessageSendButton} />
-                        ]
+                                handleClickMessageSendButton={this.handleClickMessageSendButton}
+                                setScollDiv={this.setScollDiv} />;
+                default:
+                    return <h1>Something is wrong..!</h1>;
                 }
-
+            })()}
             </div>
         );
     }

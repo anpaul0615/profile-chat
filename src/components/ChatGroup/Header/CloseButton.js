@@ -22,9 +22,9 @@ const CloseButtonWrapper = styled.div`
 `;
 /* Component */
 const CloseButton = (props)=>{
-    const { handleClickCloseConfigButton } = props;
+    const { handleClickCloseChatGroupButton } = props;
     return (
-        <CloseButtonWrapper onClick={()=>handleClickCloseConfigButton()}>
+        <CloseButtonWrapper onClick={()=>handleClickCloseChatGroupButton()}>
             닫기
         </CloseButtonWrapper>
     );

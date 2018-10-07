@@ -19,8 +19,10 @@ const InputBoxWrapper = styled.textarea`
 `;
 /* Component */
 const InputBox = (props)=>{
-    const { handleChangeInputText } = props;
-    return <InputBoxWrapper onChange={(event)=>handleChangeInputText(event)} placeholder={'메시지를 입력해주세요.'} />;
-        
+    const { messageBuffer, handleChangeInputText } = props;
+    return <InputBoxWrapper
+                value={messageBuffer}
+                onChange={handleChangeInputText}
+                placeholder={'Please Input Here.'} />;
 };
 export default InputBox;

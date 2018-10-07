@@ -1,11 +1,10 @@
 import React from 'react';
-import ConfigButton from './ConfigButton';
-import ExitButton from './ExitButton';
+import CloseButton from './CloseButton';
 import styled from "styled-components";
 
 
 /* Style-Wrapper */
-const ChatHeaderWrapper = styled.div`
+const ChatGroupHeaderWrapper = styled.div`
     position: relative;
     height: 60px;
     display: flex;
@@ -23,17 +22,13 @@ const ChatHeaderWrapper = styled.div`
     align-items: center;
 `;
 /* Component */
-const ChatHeader = (props)=>{
-    const {
-        handleClickOpenConfigButton,
-        handleClickExitButton,
-    } = props;
+const ChatGroupHeader = (props)=>{
+    const { handleClickCloseChatGroupButton } = props;
     return (
-        <ChatHeaderWrapper>
-            <ConfigButton handleClickOpenConfigButton={handleClickOpenConfigButton} />
-            "ChatHeader"
-            <ExitButton handleClickExitButton={handleClickExitButton} />
-        </ChatHeaderWrapper>
+        <ChatGroupHeaderWrapper>
+            <CloseButton handleClickCloseChatGroupButton={()=>handleClickCloseChatGroupButton()} />
+            "ChatGroupHeader"
+        </ChatGroupHeaderWrapper>
     );
 };
-export default ChatHeader;
+export default ChatGroupHeader;
