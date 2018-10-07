@@ -48,7 +48,7 @@ const SigninForm = (props)=>{
                         </Segment>
                         <Message>
                             {'New to here? '}
-                            <a role='button' onClick={handleClickGoToSignupButton}>
+                            <a role='button' style={{'cursor':'pointer'}} onClick={handleClickGoToSignupButton}>
                                 {'Sign Up'}
                             </a>
                         </Message>

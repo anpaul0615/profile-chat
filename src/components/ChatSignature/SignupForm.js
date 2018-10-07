@@ -53,7 +53,7 @@ const SignupForm = (props)=>{
                         </Segment>
                         <Message>
                             {'Already be registered? '}
-                            <a role='button' onClick={handleClickGoToSigninButton}>
+                            <a role='button' style={{'cursor':'pointer'}} onClick={handleClickGoToSigninButton}>
                                 {'Sign In'}
                             </a>
                         </Message>
