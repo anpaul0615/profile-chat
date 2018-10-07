@@ -3,26 +3,18 @@ import AWSIoTDeviceSDK from 'aws-iot-device-sdk';
 
 export default class MQTTClient {
 
-    constructor(email, credentials) {
-        this.mqtt = this;
-        this.topic = email;
-        this.clientId = email;
-        this.credentials = credentials;
-        this.initClient();
-    }
-
-    async initClient() {
+    constructor(credentials,clientId,recieveMessageCallback) {
         // Init IoT Client
         this.mqtt = AWSIoTDeviceSDK.device({
             region: IOT_CONFIG.region,
             host: IOT_CONFIG.endpoint,
-            clientId: this.clientId,
+            clientId: clientId,
             protocol: 'wss',
             maximumReconnectTimeMs: 5000,
             debug: true,
-            accessKeyId: this.credentials.accessKeyId,
-            secretKey: this.credentials.secretAccessKey,
-            sessionToken: this.credentials.sessionToken
+            accessKeyId: credentials.accessKeyId,
+            secretKey: credentials.secretAccessKey,
+            sessionToken: credentials.sessionToken
         });
         // Set IoT Client Event Listener
         this.mqtt.on('connect', (result)=>{
@@ -33,40 +25,41 @@ export default class MQTTClient {
         });
         this.mqtt.on('offline', (result) => {
             console.log('mqtt#offline..');
+            console.log(result);
         });
         this.mqtt.on('error', (err) => {
             console.log('mqtt#error..');
+            console.log(err);
         });
-    }
-
-    registerRecieveMessageCallback(handleRecieveMessage) {
         this.mqtt.on('message', (topic, messageChunk) => {
             console.log('mqtt#message..');
-            handleRecieveMessage(messageChunk.toString());
+            recieveMessageCallback(messageChunk.toString());
         });
     }
 
-    publish(message) {
+    publish(topic,message) {
         return new Promise((resolve,reject)=>{
-            this.mqtt.publish(this.topic, message, null, (err)=>{
+            this.mqtt.publish(topic, message, null, (err)=>{
                 if (err) reject(err);
                 else resolve();
             });
         });
     }
 
-    subscribe() {
+    subscribe(topic) {
+        console.log('subscribe() called!! :: ', topic);
         return new Promise((resolve,reject)=>{
-            this.mqtt.subscribe(this.topic, null, (err,granted)=>{
+            this.mqtt.subscribe(topic, null, (err,granted)=>{
                 if (err) reject(err);
                 else resolve(granted);
             });
         });
     }
 
-    unsubscribe() {
+    unsubscribe(topic) {
+        console.log('unsubscribe() called!! :: ', topic);
         return new Promise((resolve,reject)=>{
-            this.mqtt.unsubscribe(this.topic, (err)=>{
+            this.mqtt.unsubscribe(topic, (err)=>{
                 if (err) reject(err);
                 else resolve();
             });

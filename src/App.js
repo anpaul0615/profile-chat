@@ -103,8 +103,7 @@ class App extends Component {
                 queryParams: { userName: currentUser }
             });
             this.setState((prevState,props)=>({
-                chatGroups: chatGroups,
-                currentGroup: chatGroups[0]
+                chatGroups: chatGroups
             }));
 
         } catch (e) {
@@ -120,13 +119,17 @@ class App extends Component {
                 queryParams: { groupId, startDate: '1000-01-01T00:00:00.000Z' }
             });
             // Parse Message History
-            const currentUser = this.state.signin.email;
+            const currentUser = this.state.currentUser;
             const messages = (messageHistory || []).map(e=>({
                 isMine: e.userName === currentUser,
                 userName: e.userName,
                 content: e.content,
                 regDate: e.regDate,
             }));
+            // Change Message Group Subscribe
+            const oldGroupId = this.state.currentGroup;
+            await this.mqttClient.unsubscribe(oldGroupId);
+            await this.mqttClient.subscribe(groupId);
             // Update Message History
             this.setState((prevState,props)=>({
                 currentPath: '/',
@@ -150,34 +153,34 @@ class App extends Component {
     handleClickMessageSendButton = async ()=>{
         const { currentUser, currentGroup, messageBuffer } = this.state;
         if (messageBuffer === '') return;
+        try {
+            // Send Message to Database
+            const messageBody = {
+                groupId: currentGroup,
+                regDate: new Date().toISOString(),
+                content: messageBuffer,
+                userName: currentUser
+            };
+            await this.apigwClient.invokeAPIGateway({
+                path: '/messages',
+                method: 'POST',
+                body: messageBody
+            }).catch(e=>e);
+            // Send Message to MQTT
+            await this.mqttClient.publish(currentGroup, JSON.stringify(messageBody));
+            // Clear MessageBuffer
+            this.setState((prevState,props)=>({
+                messageBuffer: ''
+            }));
 
-        const messageBody = {
-            groupId: currentGroup,
-            regDate: new Date().toISOString(),
-            content: messageBuffer,
-            userName: currentUser
-        };
-        await this.apigwClient.invokeAPIGateway({
-            path: '/messages',
-            method: 'POST',
-            body: messageBody
-        }).catch(e=>e);
-        this.mqttClient.publish(JSON.stringify(messageBody));
-
-        // Clear MessageBuffer
-        this.setState((prevState,props)=>({
-            messageBuffer: ''
-        }));
+        } catch (e) {
+            console.log(e);
+        }
     }
 
     /* Signin Functions */
     attachIotPolicy = (identityId)=>{
         return new PolicyManager().attachUserIdentityToPolicy('iot-chat-policy', identityId);
-    }
-    initMqttConnection = (topic, credentials)=>{
-        this.mqttClient = new MQTTClient(topic, credentials);
-        this.mqttClient.registerRecieveMessageCallback(this.handleRecieveMessage);
-        this.mqttClient.subscribe();
     }
     checkMessageGroup = (groupId)=>{
         return this.apigwClient.invokeAPIGateway({
@@ -214,8 +217,6 @@ class App extends Component {
             const { cognitoCredentials, identityId, userName } = await this.cognitoClient.refreshCredentialsFromStorage();
             // Attach IoT Principal Policy
             await this.attachIotPolicy(identityId);
-            // Init MQTT Connection
-            this.initMqttConnection(userName, cognitoCredentials);
             // Check Message Group
             const currentUser = userName;
             const currentGroup = currentUser;
@@ -237,6 +238,10 @@ class App extends Component {
                 currentGroup,
                 messages
             }));
+            // Init MQTT Connection
+            this.mqttClient = new MQTTClient(cognitoCredentials, currentUser, this.handleRecieveMessage);
+            // Subscribe Message Group
+            await this.mqttClient.subscribe(currentGroup);
             // Move Scroll To Bottom
             this.setScrollPositionToBottom();
 
@@ -271,8 +276,6 @@ class App extends Component {
             const cognitoCredentials = await this.cognitoClient.getCredentials(userName, this.state.signin.password);
             // Attach IoT Principal Policy
             await this.attachIotPolicy(cognitoCredentials.identityId);
-            // Init MQTT Connection
-            this.initMqttConnection(userName, cognitoCredentials);
             // Check Message Group
             const currentUser = userName;
             const currentGroup = currentUser;
@@ -294,6 +297,10 @@ class App extends Component {
                 currentGroup,
                 messages
             }));
+            // Init MQTT Connection
+            this.mqttClient = new MQTTClient(cognitoCredentials, currentUser, this.handleRecieveMessage);
+            // Subscribe Message Group
+            await this.mqttClient.subscribe(currentGroup);
             // Move Scroll To Bottom
             this.setScrollPositionToBottom();
 
