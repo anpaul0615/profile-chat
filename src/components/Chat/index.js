@@ -51,10 +51,10 @@ class Chat extends React.Component {
         document.removeEventListener('keydown', this.handleSendMessageShortcut);
     }
     render() {
-        const { checkAuthentication, signout, initMessageHistoryScoll, messages } = this.props;
+        const { signout, initMessageHistoryScoll, messages } = this.props;
         const { messageBuffer } = this.state;
-        return checkAuthentication()
-        ?   <ChatWrapper>
+        return (
+            <ChatWrapper>
                 <ChatHeader
                     handleClickAppExitButton={signout}
                     handleClickOpenChatGroupButton={this.handleMoveSignupPage} />
@@ -65,7 +65,7 @@ class Chat extends React.Component {
                     handleInputMessage={this.handleInputMessage}
                     handleSendMessage={this.handleSendMessage} />
             </ChatWrapper>
-        :   <p>Unauthenticated..!</p>;
+            );
     }
 }
 export default Chat;

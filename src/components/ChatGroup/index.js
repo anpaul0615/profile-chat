@@ -13,15 +13,14 @@ const ChatGroupWrapper = styled.div`
 /* Component */
 const ChatGroup = (props)=>{
     const {
-        checkAuthentication,
         handleClickCloseChatGroupButton,
         chatGroups, handleClickChatGroup
-    }= props;
-    return checkAuthentication()
-    ?   <ChatGroupWrapper>
+    } = props;
+    return (
+        <ChatGroupWrapper>
             <ChatGroupHeader handleClickCloseChatGroupButton={handleClickCloseChatGroupButton} />
             <ChatGroupBody chatGroups={chatGroups} handleClickChatGroup={handleClickChatGroup} />
         </ChatGroupWrapper>
-    :   <p>Unauthenticated..!</p>;
+        );
 };
 export default ChatGroup;

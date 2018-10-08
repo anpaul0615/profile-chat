@@ -34,14 +34,6 @@ class App extends Component {
     handleClickCloseChatGroupButton = ()=>{
         this.changeCurrentPage('/');
     }
-    checkAuthentication = ()=>{
-        const { isAuthenticated }= this.state;
-        if (!isAuthenticated) {
-            this.changeCurrentPage('/signin');
-            return false;
-        }
-        return true;
-    }
 
 
     /* Authentication Functions */
@@ -297,6 +289,9 @@ class App extends Component {
 
     componentDidMount() {
         this.checkPreviousSessionData();
+        if (!this.state.isAuthenticated) {
+            this.changeCurrentPage('/signin');
+        }
     }
     render() {
         return (
@@ -316,14 +311,12 @@ class App extends Component {
                 case '/group':
                     return <ChatGroup
                                 key={'ChatGroup'}
-                                checkAuthentication={this.checkAuthentication}
                                 chatGroups={this.state.chatGroups}
                                 handleClickChatGroup={this.handleClickChatGroup}
                                 handleClickCloseChatGroupButton={this.handleClickCloseChatGroupButton} />;
                 case '/':
                     return <Chat
                                 key={'Chat'}
-                                checkAuthentication={this.checkAuthentication}
                                 changeCurrentPage={this.changeCurrentPage}
                                 initChatGroups={this.initChatGroups}
                                 signout={this.signout}
