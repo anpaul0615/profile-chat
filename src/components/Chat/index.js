@@ -13,9 +13,9 @@ const ChatWrapper = styled.div`
 /* Component */
 const Chat = (props)=>{
     const {
+        signout,
         checkAuthentication,
         messages, messageBuffer,
-        handleClickAppExitButton,
         handleClickOpenChatGroupButton,
         handleChangeInputText,
         handleClickMessageSendButton,
@@ -24,7 +24,7 @@ const Chat = (props)=>{
     return checkAuthentication()
     ?   <ChatWrapper>
             <ChatHeader
-                handleClickAppExitButton={handleClickAppExitButton}
+                handleClickAppExitButton={signout}
                 handleClickOpenChatGroupButton={handleClickOpenChatGroupButton} />
             <ChatBody
                 messages={messages}

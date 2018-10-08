@@ -5,7 +5,7 @@ import { Button, Form, Grid, Header, Segment, Message } from 'semantic-ui-react'
 
 
 /* Style-Wrapper */
-const SigninFormWrapper = styled.div`
+const SignupFormWrapper = styled.div`
     max-width: 500px;
     max-height: 440px;
     margin: 0 auto;
@@ -14,48 +14,52 @@ const SigninFormWrapper = styled.div`
     border-radius: 8px;
     background-color: transparent;
     background: rgba(255,255,255,1);
-    z-index: 1000000003;
 `;
 /* Component */
-const SigninForm = (props)=>{
+const SignupForm = (props)=>{
     const {
-        handleInputSigninEmail, handleInputSigninPassword,
-        handleClickSigninButton, handleClickGoToSignupButton
+        handleInputEmail, handleInputPassword, handleInputPasswordConfirm,
+        handleSignup, handleMoveSigninPage
     } = props;
     return (
-        <SigninFormWrapper>
+        <SignupFormWrapper>
             <Grid textAlign='center' style={{ height: '100%' }} verticalAlign='middle'>
                 <Grid.Column style={{ maxWidth: 450 }}>
                     <Header as='h2' color='grey' textAlign='center'>
-                        {'Log-in to your account'}
+                        {'Create new account'}
                     </Header>
                     <Form size='large'>
                         <Segment>
                             <Form.Input
                                 icon='user' iconPosition='left' fluid
                                 placeholder='E-mail address'
-                                onChange={handleInputSigninEmail} />
+                                onChange={handleInputEmail} />
                             <Form.Input
                                 icon='lock' iconPosition='left' fluid
                                 placeholder='Password'
                                 type='password'
-                                onChange={handleInputSigninPassword} />
+                                onChange={handleInputPassword} />
+                            <Form.Input
+                                icon='lock' iconPosition='left' fluid
+                                placeholder='Password Confirm'
+                                type='password'
+                                onChange={handleInputPasswordConfirm} />
                             <Button
                                 color='blue' size='large' fluid
-                                onClick={handleClickSigninButton}>
-                                {'Signin'}
+                                onClick={handleSignup}>
+                                {'Signup'}
                             </Button>
                         </Segment>
                         <Message>
-                            {'New to here? '}
-                            <a role='button' style={{'cursor':'pointer'}} onClick={handleClickGoToSignupButton}>
-                                {'Sign Up'}
+                            {'Already be registered? '}
+                            <a role='button' style={{'cursor':'pointer'}} onClick={handleMoveSigninPage}>
+                                {'Sign In'}
                             </a>
                         </Message>
                     </Form>
                 </Grid.Column>
             </Grid>
-        </SigninFormWrapper>
+        </SignupFormWrapper>
     );
 };
-export default SigninForm;
+export default SignupForm;

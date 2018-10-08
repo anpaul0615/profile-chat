@@ -1,6 +1,7 @@
 import React, {Component} from 'react';
 import './App.css';
-import ChatSignature from './components/ChatSignature';
+import ChatSignin from './components/ChatSignin';
+import ChatSignup from './components/ChatSignup';
 import Chat from './components/Chat';
 import ChatGroup from './components/ChatGroup';
 
@@ -16,18 +17,8 @@ class App extends Component {
         this.cognitoClient = new CognitoClient();
         this.inputFetchingTimer = null;
         this.state = {
-            currentPath: '/',
+            currentPage: '/',
             isAuthenticated: false,
-            hasNoAccount: false,
-            signin: {
-                email: '',
-                password: '',
-            },
-            signup: {
-                email: '',
-                password: '',
-                password2: '',
-            },
             chatGroups: [],
             currentUser: '',
             currentGroup: '',
@@ -36,149 +27,29 @@ class App extends Component {
         };
     }
 
+
     /* Page Router */
-    handlePageRouter = (path)=>{
-        this.setState((prevState,props)=>({ currentPath: path }));
+    changeCurrentPage = (page)=>{
+        this.setState((prevState,props)=>({ currentPage: page }));
     }
     handleClickOpenChatGroupButton = ()=>{
-        this.handlePageRouter('/group');
+        this.changeCurrentPage('/group');
         this.initChatGroups();
     }
     handleClickCloseChatGroupButton = ()=>{
-        this.handlePageRouter('/');
+        this.changeCurrentPage('/');
     }
     checkAuthentication = ()=>{
         const { isAuthenticated }= this.state;
         if (!isAuthenticated) {
-            this.setState((prevState,props)=>({
-                currentPath: '/auth'
-            }));
+            this.changeCurrentPage('/signin');
             return false;
         }
         return true;
     }
 
-    /* Signout Functions */
-    handleClickAppExitButton = ()=>{
-        // Confirm Signout
-        if ( !window.confirm('Signout Now?') ) {
-            return;
-        }
-        // Signout Cognito Connection
-        this.cognitoClient.signout();
-        // Clear Cognito Storage
-        this.cognitoClient.clearStorage();
-        // Disconnect MQTT Connection
-        this.mqttClient.disconnect();
-        // Clear All States
-        this.setState((prevState,props)=>({
-            currentPath: '/auth',
-            isAuthenticated: false,
-            hasNoAccount: false,
-            signin: {
-                email: '',
-                password: '',
-            },
-            signup: {
-                email: '',
-                password: '',
-                password2: '',
-            },
-            currentUser: '',
-            currentGroup: '',
-            messageBuffer: '',
-            messages: []
-        }));
-        // Close Iframe Window
-        window.parent.postMessage('chat-off','*');
-    }
 
-    /* Group Functions */
-    initChatGroups = async ()=>{
-        try {
-            const { currentUser } = this.state;
-            const { data:chatGroups } = await this.apigwClient.invokeAPIGateway({
-                path: '/messages/group/search',
-                method: 'GET',
-                queryParams: { userName: currentUser }
-            });
-            this.setState((prevState,props)=>({
-                chatGroups: chatGroups
-            }));
-
-        } catch (e) {
-            console.log(e);
-        }
-    }
-    handleClickChatGroup = async (groupId)=>{
-        try {
-            // Get All Message History
-            const { data:messageHistory } = await this.apigwClient.invokeAPIGateway({
-                path: '/messages',
-                method: 'GET',
-                queryParams: { groupId, startDate: '1000-01-01T00:00:00.000Z' }
-            });
-            // Parse Message History
-            const currentUser = this.state.currentUser;
-            const messages = (messageHistory || []).map(e=>({
-                isMine: e.userName === currentUser,
-                userName: e.userName,
-                content: e.content,
-                regDate: e.regDate,
-            }));
-            // Change Message Group Subscribe
-            const oldGroupId = this.state.currentGroup;
-            await this.mqttClient.unsubscribe(oldGroupId);
-            await this.mqttClient.subscribe(groupId);
-            // Update Message History
-            this.setState((prevState,props)=>({
-                currentPath: '/',
-                currentGroup: groupId,
-                messages
-            }));
-
-        } catch (e) {
-            console.log(e);
-            alert(e.message || e);
-        }
-    }
-
-    /* Messaging Functions */
-    handleChangeInputText = (event)=>{
-        const messageBuffer = event.target.value;
-        this.setState((prevState,props)=>({
-            messageBuffer
-        }));
-    }
-    handleClickMessageSendButton = async ()=>{
-        const { currentUser, currentGroup, messageBuffer } = this.state;
-        if (messageBuffer === '') return;
-        try {
-            // Send Message to Database
-            const messageBody = {
-                groupId: currentGroup,
-                regDate: new Date().toISOString(),
-                content: messageBuffer,
-                userName: currentUser
-            };
-            await this.apigwClient.invokeAPIGateway({
-                path: '/messages',
-                method: 'POST',
-                body: messageBody
-            }).catch(e=>e);
-            // Send Message to MQTT
-            await this.mqttClient.publish(currentGroup, JSON.stringify(messageBody));
-            // Clear MessageBuffer
-            this.setState((prevState,props)=>({
-                messageBuffer: ''
-            }));
-
-        } catch (e) {
-            console.log(e);
-        }
-    }
-
-    /* Signin Functions */
+    /* Authentication Functions */
     attachIotPolicy = (identityId)=>{
         return new PolicyManager().attachUserIdentityToPolicy('iot-chat-policy', identityId);
     }
@@ -232,7 +103,7 @@ class App extends Component {
                 regDate: e.regDate,
             }));
             this.setState((prevState,props)=>({
-                currentPath: '/',
+                currentPage: '/',
                 isAuthenticated: true,
                 currentUser,
                 currentGroup,
@@ -249,31 +120,14 @@ class App extends Component {
             console.log(e);
         }
     }
-    handleInputSigninEmail = (event)=>{
-        const email = event.target.value;
-        this.setState((prevState,props)=>({
-            signin: {
-                ...prevState.signin,
-                email
-            }
-        }));
-    }
-    handleInputSigninPassword = (event)=>{
-        const password = event.target.value;
-        this.setState((prevState,props)=>({
-            signin: {
-                ...prevState.signin,
-                password
-            }
-        }));
-    }
-    handleClickSigninButton = async ()=>{
+    signin = async (email,password)=>{
         try {
+            // Extract User Name
+            const userName = email.split('@')[0];
             // Clear Cognito Storage
             this.cognitoClient.clearStorage();
             // Get Cognito Credentials
-            const userName = this.state.signin.email.split('@')[0];
-            const cognitoCredentials = await this.cognitoClient.getCredentials(userName, this.state.signin.password);
+            const cognitoCredentials = await this.cognitoClient.getCredentials(userName, password);
             // Attach IoT Principal Policy
             await this.attachIotPolicy(cognitoCredentials.identityId);
             // Check Message Group
@@ -291,7 +145,7 @@ class App extends Component {
                 regDate: e.regDate,
             }));
             this.setState((prevState,props)=>({
-                currentPath: '/',
+                currentPage: '/',
                 isAuthenticated: true,
                 currentUser,
                 currentGroup,
@@ -309,6 +163,95 @@ class App extends Component {
             alert(e.message || e);
         }
     }
+    signup = async (email, password)=>{
+        try {
+            // Get Cognito Credentials
+            await this.cognitoClient.registerNewAccount(email,password);
+            // Notify Success to User
+            alert('Confirmation code was sent to your email!!');
+            // Go To Signin Page
+            this.setState((prevState,props)=>({
+                currentPage: '/signin'
+            }));
+
+        } catch (e) {
+            console.log(e);
+            alert(e.message || e);
+        }
+    }
+    signout = ()=>{
+        if ( !window.confirm('Signout Now?') ) {
+            return;
+        }
+        this.cognitoClient.signout();
+        this.cognitoClient.clearStorage();
+        this.mqttClient.disconnect();
+        this.setState((prevState,props)=>({
+            currentPage: '/signin',
+            isAuthenticated: false,
+            hasNoAccount: false,
+            currentUser: '',
+            currentGroup: '',
+            messageBuffer: '',
+            messages: []
+        }));
+        // Close Iframe Window
+        window.parent.postMessage('chat-off','*');
+    }
+
+
+    /* Group Functions */
+    initChatGroups = async ()=>{
+        try {
+            const { currentUser } = this.state;
+            const { data:chatGroups } = await this.apigwClient.invokeAPIGateway({
+                path: '/messages/group/search',
+                method: 'GET',
+                queryParams: { userName: currentUser }
+            });
+            this.setState((prevState,props)=>({
+                chatGroups: chatGroups
+            }));
+
+        } catch (e) {
+            console.log(e);
+        }
+    }
+    handleClickChatGroup = async (groupId)=>{
+        try {
+            // Get All Message History
+            const { data:messageHistory } = await this.apigwClient.invokeAPIGateway({
+                path: '/messages',
+                method: 'GET',
+                queryParams: { groupId, startDate: '1000-01-01T00:00:00.000Z' }
+            });
+            // Parse Message History
+            const currentUser = this.state.currentUser;
+            const messages = (messageHistory || []).map(e=>({
+                isMine: e.userName === currentUser,
+                userName: e.userName,
+                content: e.content,
+                regDate: e.regDate,
+            }));
+            // Change Message Group Subscribe
+            const oldGroupId = this.state.currentGroup;
+            await this.mqttClient.unsubscribe(oldGroupId);
+            await this.mqttClient.subscribe(groupId);
+            // Update Message History
+            this.setState((prevState,props)=>({
+                currentPage: '/',
+                currentGroup: groupId,
+                messages
+            }));
+
+        } catch (e) {
+            console.log(e);
+            alert(e.message || e);
+        }
+    }
+
+
+    /* Messaging Functions */
     handleRecieveMessage = (messageChunk)=>{
         const oldMessages = this.state.messages;
         const newMessage = JSON.parse(messageChunk.toString());
@@ -326,76 +269,40 @@ class App extends Component {
         }));
         this.setScrollPositionToBottom();
     }
-    handleClickGoToSignupButton = ()=>{
+    handleChangeInputText = (event)=>{
+        const messageBuffer = event.target.value;
         this.setState((prevState,props)=>({
-            hasNoAccount: true
+            messageBuffer
         }));
     }
-
-    /* Signup Functions */
-    handleInputSignupEmail = (event)=>{
-        const email = event.target.value;
-        this.setState((prevState,props)=>({
-            signup: {
-                ...prevState.signup,
-                email
-            }
-        }));
-    }
-    handleInputSignupPassword = (event)=>{
-        const password = event.target.value;
-        this.setState((prevState,props)=>({
-            signup: {
-                ...prevState.signup,
-                password
-            }
-        }));
-    }
-    handleInputSignupPasswordAgain = (event)=>{
-        const password2 = event.target.value;
-        this.setState((prevState,props)=>({
-            signup: {
-                ...prevState.signup,
-                password2
-            }
-        }));
-    }
-    handleClickSignupButton = async ()=>{
-        // Check Validation
-        const { email, password, password2 } = this.state.signup;
-        if (!/^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4}$/.test(email)) {
-            return alert('Email Format is Invalid..!');
-        }
-        if (password !== password2) {
-            return alert('Password Confirm is not matched..!');
-        }
-
-        // Register New Account
+    handleClickMessageSendButton = async ()=>{
+        const { currentUser, currentGroup, messageBuffer } = this.state;
+        if (messageBuffer === '') return;
         try {
-            // Get Cognito Credentials
-            await this.cognitoClient.registerNewAccount(email,password);
-            // Notify Success to User
-            alert('Confirmation code was sent to your email!!');
-            // Reset Signup Data
+            // Send Message to Database
+            const messageBody = {
+                groupId: currentGroup,
+                regDate: new Date().toISOString(),
+                content: messageBuffer,
+                userName: currentUser
+            };
+            await this.apigwClient.invokeAPIGateway({
+                path: '/messages',
+                method: 'POST',
+                body: messageBody
+            }).catch(e=>e);
+            // Send Message to MQTT
+            await this.mqttClient.publish(currentGroup, JSON.stringify(messageBody));
+            // Clear MessageBuffer
             this.setState((prevState,props)=>({
-                hasNoAccount: false,
-                signup: {
-                    email: '',
-                    password: '',
-                    password2: ''
-                }
+                messageBuffer: ''
             }));
 
         } catch (e) {
             console.log(e);
-            alert(e.message || e);
         }
     }
-    handleClickGoToSigninButton = ()=>{
-        this.setState((prevState,props)=>({
-            hasNoAccount: false
-        }));
-    }
+
     
     /* Keyboard Shortcut Functions */
     handleKeydown = (event)=>{
@@ -411,6 +318,7 @@ class App extends Component {
         document.removeEventListener('keydown', this.handleKeydown);
     }
 
+
     /* Scroll Handle Functions */
     setScollDiv = (el)=>{
         this.scrollDiv = el;
@@ -421,36 +329,36 @@ class App extends Component {
         }
     }
 
+
     render() {
         return (
             <div className="App">
             {(()=>{
-                switch(this.state.currentPath) {
-                case '/auth':
-                    return <ChatSignature
-                                key={'ChatSignature'}
-                                hasNoAccount={this.state.hasNoAccount}
-                                handleInputSigninEmail={this.handleInputSigninEmail}
-                                handleInputSigninPassword={this.handleInputSigninPassword}
-                                handleClickSigninButton={this.handleClickSigninButton}
-                                handleClickGoToSignupButton={this.handleClickGoToSignupButton}
-                                handleInputSignupEmail={this.handleInputSignupEmail}
-                                handleInputSignupPassword={this.handleInputSignupPassword}
-                                handleInputSignupPasswordAgain={this.handleInputSignupPasswordAgain}
-                                handleClickSignupButton={this.handleClickSignupButton}
-                                handleClickGoToSigninButton={this.handleClickGoToSigninButton} />;
+                switch(this.state.currentPage) {
+                case '/signin':
+                    return <ChatSignin
+                                key={'ChatSignin'}
+                                signin={this.signin}
+                                changeCurrentPage={this.changeCurrentPage} />
+                case '/signup':
+                    return <ChatSignup
+                                key={'ChatSignup'}
+                                signup={this.signup}
+                                changeCurrentPage={this.changeCurrentPage} />;
                 case '/group':
                     return <ChatGroup
+                                key={'ChatGroup'}
                                 checkAuthentication={this.checkAuthentication}
                                 chatGroups={this.state.chatGroups}
                                 handleClickChatGroup={this.handleClickChatGroup}
                                 handleClickCloseChatGroupButton={this.handleClickCloseChatGroupButton} />;
                 case '/':
                     return <Chat
+                                key={'Chat'}
+                                signout={this.signout}
                                 checkAuthentication={this.checkAuthentication}
                                 messages={this.state.messages}
                                 messageBuffer={this.state.messageBuffer}
-                                handleClickAppExitButton={this.handleClickAppExitButton}
                                 handleClickOpenChatGroupButton={this.handleClickOpenChatGroupButton}
                                 handleChangeInputText={this.handleChangeInputText}
                                 handleClickMessageSendButton={this.handleClickMessageSendButton}
@@ -463,5 +371,4 @@ class App extends Component {
         );
     }
 }
-
 export default App;
