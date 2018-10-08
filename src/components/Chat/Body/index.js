@@ -15,17 +15,19 @@ const ChatBody = (props)=>{
     const {
         messages,
         messageBuffer,
-        handleChangeInputText,
-        handleClickMessageSendButton,
-        setScollDiv
+        handleInputMessage,
+        handleSendMessage,
+        initMessageHistoryScoll
     }= props;
     return (
         <ChatBodyWrapper>
-            <MessageHistory messages={messages} setScollDiv={setScollDiv} />
+            <MessageHistory
+                messages={messages}
+                initMessageHistoryScoll={initMessageHistoryScoll} />
             <MessageInputBox
                 messageBuffer={messageBuffer}
-                handleChangeInputText={handleChangeInputText}
-                handleClickMessageSendButton={handleClickMessageSendButton}/>
+                handleChangeInputText={handleInputMessage}
+                handleClickMessageSendButton={handleSendMessage}/>
         </ChatBodyWrapper>
     );
 };

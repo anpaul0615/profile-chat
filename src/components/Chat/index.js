@@ -11,28 +11,61 @@ const ChatWrapper = styled.div`
     overflow: hidden;
 `;
 /* Component */
-const Chat = (props)=>{
-    const {
-        signout,
-        checkAuthentication,
-        messages, messageBuffer,
-        handleClickOpenChatGroupButton,
-        handleChangeInputText,
-        handleClickMessageSendButton,
-        setScollDiv
-    }= props;
-    return checkAuthentication()
-    ?   <ChatWrapper>
-            <ChatHeader
-                handleClickAppExitButton={signout}
-                handleClickOpenChatGroupButton={handleClickOpenChatGroupButton} />
-            <ChatBody
-                messages={messages}
-                messageBuffer={messageBuffer}
-                handleChangeInputText={handleChangeInputText}
-                handleClickMessageSendButton={handleClickMessageSendButton}
-                setScollDiv={setScollDiv} />
-        </ChatWrapper>
-    :   <p>Unauthenticated..!</p>;
-};
+class Chat extends React.Component {
+    constructor() {
+        super();
+        this.state = {
+            messageBuffer: ''
+        }
+    }
+
+    handleInputMessage = (event)=>{
+        const messageBuffer = event.target.value;
+        this.setState((prevState,props)=>({
+            messageBuffer
+        }));
+    }
+    handleSendMessage = ()=>{
+        const { messageBuffer }= this.state;
+        this.props.sendMessage(messageBuffer);
+        this.props.moveMessageHistoryScollToBottom();
+        this.setState((prevState,props)=>({
+            messageBuffer: ''
+        }));
+    }
+    handleSendMessageShortcut = (event)=>{
+        if (event.keyCode===13 && event.ctrlKey) {
+            this.handleSendMessage();
+        }
+    }
+    handleMoveSignupPage = ()=>{
+        this.props.changeCurrentPage('/group');
+        this.props.initChatGroups();
+    }
+
+
+    componentDidMount() {
+        document.addEventListener('keydown', this.handleSendMessageShortcut);
+    }
+    componentWillUnmount() {
+        document.removeEventListener('keydown', this.handleSendMessageShortcut);
+    }
+    render() {
+        const { checkAuthentication, signout, initMessageHistoryScoll, messages } = this.props;
+        const { messageBuffer } = this.state;
+        return checkAuthentication()
+        ?   <ChatWrapper>
+                <ChatHeader
+                    handleClickAppExitButton={signout}
+                    handleClickOpenChatGroupButton={this.handleMoveSignupPage} />
+                <ChatBody
+                    messages={messages}
+                    messageBuffer={messageBuffer}
+                    initMessageHistoryScoll={initMessageHistoryScoll}
+                    handleInputMessage={this.handleInputMessage}
+                    handleSendMessage={this.handleSendMessage} />
+            </ChatWrapper>
+        :   <p>Unauthenticated..!</p>;
+    }
+}
 export default Chat;

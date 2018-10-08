@@ -22,7 +22,6 @@ class App extends Component {
             chatGroups: [],
             currentUser: '',
             currentGroup: '',
-            messageBuffer: '',
             messages: []
         };
     }
@@ -31,10 +30,6 @@ class App extends Component {
     /* Page Router */
     changeCurrentPage = (page)=>{
         this.setState((prevState,props)=>({ currentPage: page }));
-    }
-    handleClickOpenChatGroupButton = ()=>{
-        this.changeCurrentPage('/group');
-        this.initChatGroups();
     }
     handleClickCloseChatGroupButton = ()=>{
         this.changeCurrentPage('/');
@@ -110,11 +105,11 @@ class App extends Component {
                 messages
             }));
             // Init MQTT Connection
-            this.mqttClient = new MQTTClient(cognitoCredentials, currentUser, this.handleRecieveMessage);
+            this.mqttClient = new MQTTClient(cognitoCredentials, currentUser, this.appendMessage);
             // Subscribe Message Group
             await this.mqttClient.subscribe(currentGroup);
             // Move Scroll To Bottom
-            this.setScrollPositionToBottom();
+            this.moveMessageHistoryScollToBottom();
 
         } catch (e) {
             console.log(e);
@@ -152,11 +147,11 @@ class App extends Component {
                 messages
             }));
             // Init MQTT Connection
-            this.mqttClient = new MQTTClient(cognitoCredentials, currentUser, this.handleRecieveMessage);
+            this.mqttClient = new MQTTClient(cognitoCredentials, currentUser, this.appendMessage);
             // Subscribe Message Group
             await this.mqttClient.subscribe(currentGroup);
             // Move Scroll To Bottom
-            this.setScrollPositionToBottom();
+            this.moveMessageHistoryScollToBottom();
 
         } catch (e) {
             console.log(e);
@@ -252,31 +247,16 @@ class App extends Component {
 
 
     /* Messaging Functions */
-    handleRecieveMessage = (messageChunk)=>{
-        const oldMessages = this.state.messages;
-        const newMessage = JSON.parse(messageChunk.toString());
-        const { currentUser } = this.state;
+    appendMessage = (messageChunk)=>{
+        let newMessage = JSON.parse(messageChunk);
+        newMessage.isMine = (newMessage.userName === this.state.currentUser);
         this.setState((prevState,props)=>({
-            messages: [
-                ...oldMessages,
-                {
-                    isMine: newMessage.userName === currentUser,
-                    userName: newMessage.userName,
-                    content: newMessage.content,
-                    regDate: newMessage.regDate
-                }
-            ]
+            messages: [ ...prevState.messages, newMessage ]
         }));
-        this.setScrollPositionToBottom();
+        this.moveMessageHistoryScollToBottom();
     }
-    handleChangeInputText = (event)=>{
-        const messageBuffer = event.target.value;
-        this.setState((prevState,props)=>({
-            messageBuffer
-        }));
-    }
-    handleClickMessageSendButton = async ()=>{
-        const { currentUser, currentGroup, messageBuffer } = this.state;
+    sendMessage = async (messageBuffer)=>{
+        const { currentUser, currentGroup } = this.state;
         if (messageBuffer === '') return;
         try {
             // Send Message to Database
@@ -304,32 +284,20 @@ class App extends Component {
     }
 
     
-    /* Keyboard Shortcut Functions */
-    handleKeydown = (event)=>{
-        if (event.keyCode===13 && event.ctrlKey) {
-            this.handleClickMessageSendButton();
+    /* Scroll Handle Functions */
+    initMessageHistoryScoll = (el)=>{
+        this.messageHistoryScrollDiv = el;
+    }
+    moveMessageHistoryScollToBottom = ()=>{
+        if (this.messageHistoryScrollDiv) {
+            this.messageHistoryScrollDiv.scrollIntoView(false);
         }
     }
+
+
     componentDidMount() {
-        document.addEventListener('keydown', this.handleKeydown);
         this.checkPreviousSessionData();
     }
-    componentWillUnmount() {
-        document.removeEventListener('keydown', this.handleKeydown);
-    }
-
-
-    /* Scroll Handle Functions */
-    setScollDiv = (el)=>{
-        this.scrollDiv = el;
-    }
-    setScrollPositionToBottom = ()=>{
-        if (this.scrollDiv) {
-            this.scrollDiv.scrollIntoView(false);
-        }
-    }
-
-
     render() {
         return (
             <div className="App">
@@ -355,14 +323,14 @@ class App extends Component {
                 case '/':
                     return <Chat
                                 key={'Chat'}
-                                signout={this.signout}
                                 checkAuthentication={this.checkAuthentication}
+                                changeCurrentPage={this.changeCurrentPage}
+                                initChatGroups={this.initChatGroups}
+                                signout={this.signout}
                                 messages={this.state.messages}
-                                messageBuffer={this.state.messageBuffer}
-                                handleClickOpenChatGroupButton={this.handleClickOpenChatGroupButton}
-                                handleChangeInputText={this.handleChangeInputText}
-                                handleClickMessageSendButton={this.handleClickMessageSendButton}
-                                setScollDiv={this.setScollDiv} />;
+                                sendMessage={this.sendMessage}
+                                initMessageHistoryScoll={this.initMessageHistoryScoll}
+                                moveMessageHistoryScollToBottom={this.moveMessageHistoryScollToBottom} />;
                 default:
                     return <h1>Something is wrong..!</h1>;
                 }
