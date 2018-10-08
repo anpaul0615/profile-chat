@@ -4,6 +4,7 @@ import ChatSignin from './components/ChatSignin';
 import ChatSignup from './components/ChatSignup';
 import Chat from './components/Chat';
 import ChatGroup from './components/ChatGroup';
+import LoadingCircle from './components/LoadingCircle';
 
 import CognitoClient from './lib/cognito-client';
 import MQTTClient from './lib/mqtt-client';
@@ -17,6 +18,7 @@ class App extends Component {
         this.cognitoClient = new CognitoClient();
         this.inputFetchingTimer = null;
         this.state = {
+            isPending: false,
             currentPage: '/',
             isAuthenticated: false,
             chatGroups: [],
@@ -33,6 +35,16 @@ class App extends Component {
     }
     handleClickCloseChatGroupButton = ()=>{
         this.changeCurrentPage('/');
+    }
+    setPendingStart = ()=>{
+        return new Promise((resolve) => {
+            this.setState({ ...this.state, isPending: true }, resolve)
+        });
+    }
+    setPendingFinish = ()=>{
+        return new Promise((resolve)=>{
+            this.setState({ ...this.state, isPending: false }, resolve)
+        });
     }
 
 
@@ -73,6 +85,8 @@ class App extends Component {
         try {
             // Get Credentials From Previous Session Data
             const { cognitoCredentials, identityId, userName } = await this.cognitoClient.refreshCredentialsFromStorage();
+            // Set Pending State To Start
+            await this.setPendingStart();
             // Attach IoT Principal Policy
             await this.attachIotPolicy(identityId);
             // Check Message Group
@@ -102,6 +116,8 @@ class App extends Component {
             await this.mqttClient.subscribe(currentGroup);
             // Move Scroll To Bottom
             this.moveMessageHistoryScollToBottom();
+            // Set Pending State To Finish
+            await this.setPendingFinish();
 
         } catch (e) {
             console.log(e);
@@ -115,6 +131,8 @@ class App extends Component {
             this.cognitoClient.clearStorage();
             // Get Cognito Credentials
             const cognitoCredentials = await this.cognitoClient.getCredentials(userName, password);
+            // Set Pending State To Start
+            await this.setPendingStart();
             // Attach IoT Principal Policy
             await this.attachIotPolicy(cognitoCredentials.identityId);
             // Check Message Group
@@ -144,6 +162,8 @@ class App extends Component {
             await this.mqttClient.subscribe(currentGroup);
             // Move Scroll To Bottom
             this.moveMessageHistoryScollToBottom();
+            // Set Pending State To Finish
+            await this.setPendingFinish();
 
         } catch (e) {
             console.log(e);
@@ -206,6 +226,8 @@ class App extends Component {
     }
     handleClickChatGroup = async (groupId)=>{
         try {
+            // Set Pending State To Start
+            await this.setPendingStart();
             // Get All Message History
             const { data:messageHistory } = await this.apigwClient.invokeAPIGateway({
                 path: '/messages',
@@ -230,6 +252,8 @@ class App extends Component {
                 currentGroup: groupId,
                 messages
             }));
+            // Set Pending State To Finish
+            await this.setPendingFinish();
 
         } catch (e) {
             console.log(e);
@@ -251,6 +275,8 @@ class App extends Component {
         const { currentUser, currentGroup } = this.state;
         if (messageBuffer === '') return;
         try {
+            // Set Pending State To Start
+            await this.setPendingStart();
             // Send Message to Database
             const messageBody = {
                 groupId: currentGroup,
@@ -269,6 +295,8 @@ class App extends Component {
             this.setState((prevState,props)=>({
                 messageBuffer: ''
             }));
+            // Set Pending State To Finish
+            await this.setPendingFinish();
 
         } catch (e) {
             console.log(e);
@@ -296,7 +324,8 @@ class App extends Component {
     render() {
         return (
             <div className="App">
-            {(()=>{
+                { this.state.isPending ? <LoadingCircle /> : null }
+                {(()=>{
                 switch(this.state.currentPage) {
                 case '/signin':
                     return <ChatSignin
@@ -327,7 +356,7 @@ class App extends Component {
                 default:
                     return <h1>Something is wrong..!</h1>;
                 }
-            })()}
+                })()}
             </div>
         );
     }
