@@ -1,11 +1,15 @@
 import IOT_CONFIG from '../configs/aws.iot.json';
 import AWSIoTDeviceSDK from 'aws-iot-device-sdk';
 
+let instance = null;
+
 export default class MQTTClient {
 
     constructor(credentials,clientId,recieveMessageCallback) {
+        // Return Singleton Object
+        if (instance) return instance;
         // Init IoT Client
-        this.mqtt = AWSIoTDeviceSDK.device({
+        instance = AWSIoTDeviceSDK.device({
             region: IOT_CONFIG.region,
             host: IOT_CONFIG.endpoint,
             clientId: clientId,
@@ -17,21 +21,21 @@ export default class MQTTClient {
             sessionToken: credentials.sessionToken
         });
         // Set IoT Client Event Listener
-        this.mqtt.on('connect', (result)=>{
+        instance.on('connect', (result)=>{
             console.log('mqtt#connect..');
         });
-        this.mqtt.on('reconnect', (result)=>{
+        instance.on('reconnect', (result)=>{
             console.log('mqtt#reconnect..');
         });
-        this.mqtt.on('offline', (result) => {
+        instance.on('offline', (result) => {
             console.log('mqtt#offline..');
             console.log(result);
         });
-        this.mqtt.on('error', (err) => {
+        instance.on('error', (err) => {
             console.log('mqtt#error..');
             console.log(err);
         });
-        this.mqtt.on('message', (topic, messageChunk) => {
+        instance.on('message', (topic, messageChunk) => {
             console.log('mqtt#message..');
             recieveMessageCallback(messageChunk.toString());
         });
@@ -39,7 +43,7 @@ export default class MQTTClient {
 
     publish(topic,message) {
         return new Promise((resolve,reject)=>{
-            this.mqtt.publish(topic, message, null, (err)=>{
+            instance.publish(topic, message, null, (err)=>{
                 if (err) reject(err);
                 else resolve();
             });
@@ -49,7 +53,7 @@ export default class MQTTClient {
     subscribe(topic) {
         console.log('subscribe() called!! :: ', topic);
         return new Promise((resolve,reject)=>{
-            this.mqtt.subscribe(topic, null, (err,granted)=>{
+            instance.subscribe(topic, null, (err,granted)=>{
                 if (err) reject(err);
                 else resolve(granted);
             });
@@ -59,7 +63,7 @@ export default class MQTTClient {
     unsubscribe(topic) {
         console.log('unsubscribe() called!! :: ', topic);
         return new Promise((resolve,reject)=>{
-            this.mqtt.unsubscribe(topic, (err)=>{
+            instance.unsubscribe(topic, (err)=>{
                 if (err) reject(err);
                 else resolve();
             });
@@ -67,7 +71,7 @@ export default class MQTTClient {
     }
 
     disconnect(){
-        this.mqtt.end();
-        this.mqtt = null;
+        instance.end();
+        instance = null;
     }
 }

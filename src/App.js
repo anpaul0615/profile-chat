@@ -21,11 +21,23 @@ class App extends Component {
             isPending: false,
             currentPage: '/',
             isAuthenticated: false,
-            chatGroups: [],
             currentUser: '',
             currentGroup: '',
             messages: []
         };
+    }
+
+
+    /* State Manage Functions */
+    getGlobalState = ()=>{
+        return new Promise((resolve) => {
+            resolve(this.state);
+        });
+    }
+    setGlobalState = (newState)=>{
+        return new Promise((resolve) => {
+            this.setState({ ...this.state, ...newState }, resolve)
+        });
     }
 
 
@@ -199,66 +211,10 @@ class App extends Component {
             hasNoAccount: false,
             currentUser: '',
             currentGroup: '',
-            messageBuffer: '',
             messages: []
         }));
         // Close Iframe Window
         window.parent.postMessage('chat-off','*');
-    }
-
-
-    /* Group Functions */
-    initChatGroups = async ()=>{
-        try {
-            const { currentUser } = this.state;
-            const { data:chatGroups } = await this.apigwClient.invokeAPIGateway({
-                path: '/messages/group/search',
-                method: 'GET',
-                queryParams: { userName: currentUser }
-            });
-            this.setState((prevState,props)=>({
-                chatGroups: chatGroups
-            }));
-
-        } catch (e) {
-            console.log(e);
-        }
-    }
-    handleClickChatGroup = async (groupId)=>{
-        try {
-            // Set Pending State To Start
-            await this.setPendingStart();
-            // Get All Message History
-            const { data:messageHistory } = await this.apigwClient.invokeAPIGateway({
-                path: '/messages',
-                method: 'GET',
-                queryParams: { groupId, startDate: '1000-01-01T00:00:00.000Z' }
-            });
-            // Parse Message History
-            const currentUser = this.state.currentUser;
-            const messages = (messageHistory || []).map(e=>({
-                isMine: e.userName === currentUser,
-                userName: e.userName,
-                content: e.content,
-                regDate: e.regDate,
-            }));
-            // Change Message Group Subscribe
-            const oldGroupId = this.state.currentGroup;
-            await this.mqttClient.unsubscribe(oldGroupId);
-            await this.mqttClient.subscribe(groupId);
-            // Update Message History
-            this.setState((prevState,props)=>({
-                currentPage: '/',
-                currentGroup: groupId,
-                messages
-            }));
-            // Set Pending State To Finish
-            await this.setPendingFinish();
-
-        } catch (e) {
-            console.log(e);
-            alert(e.message || e);
-        }
     }
 
 
@@ -340,14 +296,12 @@ class App extends Component {
                 case '/group':
                     return <ChatGroup
                                 key={'ChatGroup'}
-                                chatGroups={this.state.chatGroups}
-                                handleClickChatGroup={this.handleClickChatGroup}
-                                handleClickCloseChatGroupButton={this.handleClickCloseChatGroupButton} />;
+                                setGlobalState={this.setGlobalState}
+                                getGlobalState={this.getGlobalState} />;
                 case '/':
                     return <Chat
                                 key={'Chat'}
                                 changeCurrentPage={this.changeCurrentPage}
-                                initChatGroups={this.initChatGroups}
                                 signout={this.signout}
                                 messages={this.state.messages}
                                 sendMessage={this.sendMessage}

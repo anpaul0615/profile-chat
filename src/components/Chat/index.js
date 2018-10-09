@@ -40,7 +40,6 @@ class Chat extends React.Component {
     }
     handleMoveSignupPage = ()=>{
         this.props.changeCurrentPage('/group');
-        this.props.initChatGroups();
     }
 
 
