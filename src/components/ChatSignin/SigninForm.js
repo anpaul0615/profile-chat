@@ -15,6 +15,11 @@ const SigninFormWrapper = styled.div`
     background-color: transparent;
     background: rgba(255,255,255,1);
 `;
+const MessageButton = styled.span`
+    color: #4183c4;
+    text-decoration: none;
+    cursor: pointer;
+`;
 /* Component */
 const SigninForm = (props)=>{
     const {
@@ -47,9 +52,9 @@ const SigninForm = (props)=>{
                         </Segment>
                         <Message>
                             {'New to here? '}
-                            <a role='button' style={{'cursor':'pointer'}} onClick={handleMoveSignupPage}>
+                            <MessageButton onClick={handleMoveSignupPage}>
                                 {'Sign Up'}
-                            </a>
+                            </MessageButton>
                         </Message>
                     </Form>
                 </Grid.Column>
