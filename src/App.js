@@ -12,7 +12,7 @@ import PolicyManager from './lib/policy-manager';
 import APIGatewayClient from './lib/apigateway-client';
 
 class App extends Component {
-    constructor(){
+    constructor() {
         super();
         this.apigwClient = new APIGatewayClient();
         this.cognitoClient = new CognitoClient();
@@ -96,11 +96,13 @@ class App extends Component {
     checkPreviousSessionData = async ()=>{
         try {
             // Get Credentials From Previous Session Data
-            const { cognitoCredentials, identityId, userName } = await this.cognitoClient.refreshCredentialsFromStorage();
+            const cognitoUserSession = await this.cognitoClient.getUserSessionFromStorage();
+            const cognitoCredentials = await this.cognitoClient.getCredentials(cognitoUserSession);
+            const userName = await this.cognitoClient.getUserName();
             // Set Pending State To Start
             await this.setPendingStart();
             // Attach IoT Principal Policy
-            await this.attachIotPolicy(identityId);
+            await this.attachIotPolicy(cognitoCredentials.identityId);
             // Check Message Group
             const currentUser = userName;
             const currentGroup = currentUser;
@@ -142,7 +144,8 @@ class App extends Component {
             // Clear Cognito Storage
             this.cognitoClient.clearStorage();
             // Get Cognito Credentials
-            const cognitoCredentials = await this.cognitoClient.getCredentials(userName, password);
+            const cognitoUserSession = await this.cognitoClient.getUserSessionByAuthentication(userName, password);
+            const cognitoCredentials = await this.cognitoClient.getCredentials(cognitoUserSession);
             // Set Pending State To Start
             await this.setPendingStart();
             // Attach IoT Principal Policy
