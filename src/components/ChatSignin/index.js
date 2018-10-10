@@ -31,8 +31,10 @@ class ChatSignin extends React.Component {
         const { email, password } = this.state;
         this.props.signin(email, password);
     }
-    handleMoveSignupPage = ()=>{
-        this.props.changeCurrentPage('/signup');
+    handleMoveSignupPage = async ()=>{
+        await this.props.setGlobalState({
+            currentPage: '/signup'
+        });
     }
 
     render() {

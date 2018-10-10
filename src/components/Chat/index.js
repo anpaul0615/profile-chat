@@ -12,6 +12,7 @@ const ChatWrapper = styled.div`
 `;
 /* Component */
 class Chat extends React.Component {
+
     constructor() {
         super();
         this.state = {
@@ -38,8 +39,10 @@ class Chat extends React.Component {
             this.handleSendMessage();
         }
     }
-    handleMoveSignupPage = ()=>{
-        this.props.changeCurrentPage('/group');
+    handleMoveSignupPage = async ()=>{
+        await this.props.setGlobalState({
+            currentPage: '/group'
+        });
     }
 
 

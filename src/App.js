@@ -19,7 +19,7 @@ class App extends Component {
         this.inputFetchingTimer = null;
         this.state = {
             isPending: false,
-            currentPage: '/',
+            currentPage: '/signin',
             isAuthenticated: false,
             currentUser: '',
             currentGroup: '',
@@ -42,12 +42,6 @@ class App extends Component {
 
 
     /* Page Router */
-    changeCurrentPage = (page)=>{
-        this.setState((prevState,props)=>({ currentPage: page }));
-    }
-    handleClickCloseChatGroupButton = ()=>{
-        this.changeCurrentPage('/');
-    }
     setPendingStart = ()=>{
         return new Promise((resolve) => {
             this.setState({ ...this.state, isPending: true }, resolve)
@@ -276,9 +270,6 @@ class App extends Component {
 
     componentDidMount() {
         this.checkPreviousSessionData();
-        if (!this.state.isAuthenticated) {
-            this.changeCurrentPage('/signin');
-        }
     }
     render() {
         return (
@@ -290,12 +281,14 @@ class App extends Component {
                     return <ChatSignin
                                 key={'ChatSignin'}
                                 signin={this.signin}
-                                changeCurrentPage={this.changeCurrentPage} />
+                                setGlobalState={this.setGlobalState}
+                                getGlobalState={this.getGlobalState} />
                 case '/signup':
                     return <ChatSignup
                                 key={'ChatSignup'}
                                 signup={this.signup}
-                                changeCurrentPage={this.changeCurrentPage} />;
+                                setGlobalState={this.setGlobalState}
+                                getGlobalState={this.getGlobalState} />;
                 case '/group':
                     return <ChatGroup
                                 key={'ChatGroup'}
@@ -304,7 +297,8 @@ class App extends Component {
                 case '/':
                     return <Chat
                                 key={'Chat'}
-                                changeCurrentPage={this.changeCurrentPage}
+                                setGlobalState={this.setGlobalState}
+                                getGlobalState={this.getGlobalState}
                                 signout={this.signout}
                                 messages={this.state.messages}
                                 sendMessage={this.sendMessage}
