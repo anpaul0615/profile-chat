@@ -14,10 +14,8 @@ class App extends Component {
         this.state = {
             isPending: false,
             currentPage: '/signin',
-            isAuthenticated: false,
             currentUser: '',
-            currentGroup: '',
-            messages: []
+            currentGroup: ''
         };
     }
 
@@ -31,19 +29,6 @@ class App extends Component {
     setGlobalState = (newState)=>{
         return new Promise((resolve) => {
             this.setState({ ...this.state, ...newState }, resolve)
-        });
-    }
-
-
-    /* Page Router */
-    setPendingStart = ()=>{
-        return new Promise((resolve) => {
-            this.setState({ ...this.state, isPending: true }, resolve)
-        });
-    }
-    setPendingFinish = ()=>{
-        return new Promise((resolve)=>{
-            this.setState({ ...this.state, isPending: false }, resolve)
         });
     }
 
@@ -89,7 +74,9 @@ class App extends Component {
             const cognitoCredentials = await libs.cognitoClient.getCredentials();
             const userName = await libs.cognitoClient.getUserName();
             // Set Pending State To Start
-            await this.setPendingStart();
+            await this.setGlobalState({
+                isPending: true
+            });
             // Attach IoT Principal Policy
             await this.attachIotPolicy(cognitoCredentials.identityId);
             // Check Message Group
@@ -97,33 +84,13 @@ class App extends Component {
             const currentGroup = currentUser;
             if (!await this.checkMessageGroup(currentGroup))
                 await this.createMessageGroup(currentGroup,currentUser);
-            // Get All Message History
-            const messageHistory = await this.getMessageHistory(currentGroup);
-            // Parse Message History
-            const messages = (messageHistory || []).map(e=>({
-                isMine: e.userName === currentUser,
-                userName: e.userName,
-                content: e.content,
-                regDate: e.regDate,
-            }));
-            this.setState((prevState,props)=>({
+            // Update State
+            await this.setGlobalState({
+                isPending: false,
                 currentPage: '/',
-                isAuthenticated: true,
                 currentUser,
-                currentGroup,
-                messages
-            }));
-
-            // Init MQTT Connection
-            await libs.mqttClient.init(currentUser);
-            // Subscribe Message Group
-            await libs.mqttClient.subscribe(currentGroup);
-            libs.mqttClient.registerMessageCallback(this.appendMessage);
-
-            // Move Scroll To Bottom
-            this.moveMessageHistoryScollToBottom();
-            // Set Pending State To Finish
-            await this.setPendingFinish();
+                currentGroup
+            });
 
         } catch (e) {
             console.log(e);
@@ -136,11 +103,13 @@ class App extends Component {
             // Clear Cognito Storage
             libs.cognitoClient.clearStorage();
             // Get Cognito Credentials
-            await libs.cognitoClient.setUserSessionByAuthentication(userName, password);
+            await libs.cognitoClient.setUserSessionByAuthentication(userName,password);
             await libs.cognitoClient.updateCredentials();
             const cognitoCredentials = await libs.cognitoClient.getCredentials();
             // Set Pending State To Start
-            await this.setPendingStart();
+            await this.setGlobalState({
+                isPending: true
+            });
             // Attach IoT Principal Policy
             await this.attachIotPolicy(cognitoCredentials.identityId);
             // Check Message Group
@@ -148,33 +117,13 @@ class App extends Component {
             const currentGroup = currentUser;
             if (!await this.checkMessageGroup(currentGroup))
                 await this.createMessageGroup(currentGroup,currentUser);
-            // Get All Message History
-            const messageHistory = await this.getMessageHistory(currentGroup);
-            // Parse Message History
-            const messages = (messageHistory || []).map(e=>({
-                isMine: e.userName === currentUser,
-                userName: e.userName,
-                content: e.content,
-                regDate: e.regDate,
-            }));
-            this.setState((prevState,props)=>({
+            // Update State
+            await this.setGlobalState({
+                isPending: false,
                 currentPage: '/',
-                isAuthenticated: true,
                 currentUser,
-                currentGroup,
-                messages
-            }));
-
-            // Init MQTT Connection
-            libs.mqttClient.init(currentUser);
-            // Subscribe Message Group
-            await libs.mqttClient.subscribe(currentGroup);
-            libs.mqttClient.registerMessageCallback(this.appendMessage);
-
-            // Move Scroll To Bottom
-            this.moveMessageHistoryScollToBottom();
-            // Set Pending State To Finish
-            await this.setPendingFinish();
+                currentGroup
+            });
 
         } catch (e) {
             console.log(e);
@@ -188,84 +137,13 @@ class App extends Component {
             // Notify Success to User
             alert('Confirmation code was sent to your email!!');
             // Go To Signin Page
-            this.setState((prevState,props)=>({
+            await this.setGlobalState({
                 currentPage: '/signin'
-            }));
+            });
 
         } catch (e) {
             console.log(e);
             alert(e.message || e);
-        }
-    }
-    signout = ()=>{
-        if ( !window.confirm('Signout Now?') ) {
-            return;
-        }
-        libs.cognitoClient.signout();
-        libs.cognitoClient.clearStorage();
-        libs.mqttClient.disconnect();
-        this.setState((prevState,props)=>({
-            currentPage: '/signin',
-            isAuthenticated: false,
-            hasNoAccount: false,
-            currentUser: '',
-            currentGroup: '',
-            messages: []
-        }));
-        // Close Iframe Window
-        window.parent.postMessage('chat-off','*');
-    }
-
-
-    /* Messaging Functions */
-    appendMessage = (messageChunk)=>{
-        let newMessage = JSON.parse(messageChunk);
-        newMessage.isMine = (newMessage.userName === this.state.currentUser);
-        this.setState((prevState,props)=>({
-            messages: [ ...prevState.messages, newMessage ]
-        }));
-        this.moveMessageHistoryScollToBottom();
-    }
-    sendMessage = async (messageBuffer)=>{
-        const { currentUser, currentGroup } = this.state;
-        if (messageBuffer === '') return;
-        try {
-            // Set Pending State To Start
-            await this.setPendingStart();
-            // Send Message to Database
-            const messageBody = {
-                groupId: currentGroup,
-                regDate: new Date().toISOString(),
-                content: messageBuffer,
-                userName: currentUser
-            };
-            await libs.apigwClient.invokeAPIGateway({
-                path: '/messages',
-                method: 'POST',
-                body: messageBody
-            }).catch(e=>e);
-            // Send Message to MQTT
-            await libs.mqttClient.publish(currentGroup, JSON.stringify(messageBody));
-            // Clear MessageBuffer
-            this.setState((prevState,props)=>({
-                messageBuffer: ''
-            }));
-            // Set Pending State To Finish
-            await this.setPendingFinish();
-
-        } catch (e) {
-            console.log(e);
-        }
-    }
-
-    
-    /* Scroll Handle Functions */
-    initMessageHistoryScoll = (el)=>{
-        this.messageHistoryScrollDiv = el;
-    }
-    moveMessageHistoryScollToBottom = ()=>{
-        if (this.messageHistoryScrollDiv) {
-            this.messageHistoryScrollDiv.scrollIntoView(false);
         }
     }
 
@@ -300,12 +178,7 @@ class App extends Component {
                     return <Chat
                                 key={'Chat'}
                                 setGlobalState={this.setGlobalState}
-                                getGlobalState={this.getGlobalState}
-                                signout={this.signout}
-                                messages={this.state.messages}
-                                sendMessage={this.sendMessage}
-                                initMessageHistoryScoll={this.initMessageHistoryScoll}
-                                moveMessageHistoryScollToBottom={this.moveMessageHistoryScollToBottom} />;
+                                getGlobalState={this.getGlobalState} />;
                 default:
                     return <h1>Something is wrong..!</h1>;
                 }
