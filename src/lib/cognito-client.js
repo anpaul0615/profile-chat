@@ -4,7 +4,8 @@ import * as CognitoIdentity from 'amazon-cognito-identity-js';
 
 export default class CognitoClient {
 
-    constructor() {
+    constructor(globalConfig) {
+        this.globalConfig = globalConfig;
         this.userPool = new CognitoIdentity.CognitoUserPool({
             UserPoolId: COGNITO_CONFIG.UserPoolId,
             ClientId: COGNITO_CONFIG.ClientId
@@ -18,10 +19,16 @@ export default class CognitoClient {
         });
     }
 
-    getCredentials(cognitoUserSession) {
+    getCredentials() {
         return new Promise((resolve,reject)=>{
-            const idToken = cognitoUserSession.getIdToken().getJwtToken();
-            const providerKey = `cognito-idp.${COGNITO_CONFIG.region}.amazonaws.com/${COGNITO_CONFIG.UserPoolId}`;
+            return resolve(this.globalConfig.credentials);
+        });
+    }
+
+    updateCredentials() {
+        return new Promise((resolve,reject)=>{
+            const idToken = this.cognitoUserSession.getIdToken().getJwtToken();
+            const providerKey = `${COGNITO_CONFIG.endpoint}/${COGNITO_CONFIG.UserPoolId}`;
             const cognitoCredentials = new AWS.CognitoIdentityCredentials({
                 IdentityPoolId: COGNITO_CONFIG.IdentityPoolId,
                 Logins : {
@@ -29,16 +36,15 @@ export default class CognitoClient {
                 }
             });
             // Set Cognito Credentials
-            AWS.config.region = COGNITO_CONFIG.region;
-            AWS.config.credentials = cognitoCredentials;
-            AWS.config.credentials.refresh((err) => {
+            this.globalConfig.credentials = cognitoCredentials;
+            this.globalConfig.credentials.refresh((err) => {
                 if (err) return reject(err);
-                return resolve(AWS.config.credentials);
+                return resolve();
             });
         });
     }
 
-    getUserSessionFromStorage() {
+    setUserSessionFromStorage() {
         return new Promise((resolve,reject)=>{
             // Check Previous-Session-Data Form Cognito-Storage (Localstorage/Cookie)
             this.cognitoUser = this.userPool.getCurrentUser();
@@ -48,12 +54,13 @@ export default class CognitoClient {
             // Get Cognito-Session From Cognito-Storage
             this.cognitoUser.getSession((err,signInUserSession)=>{
                 if (err) return reject(err);
-                return resolve(signInUserSession);
+                this.cognitoUserSession = signInUserSession;
+                return resolve();
             });
         });
     }
 
-    getUserSessionByAuthentication(userName, password) {
+    setUserSessionByAuthentication(userName, password) {
         return new Promise((resolve,reject)=>{
             // Init CognitoUser
             this.cognitoUser = new CognitoIdentity.CognitoUser({
@@ -68,6 +75,7 @@ export default class CognitoClient {
             // Authenticate Cognito User
             this.cognitoUser.authenticateUser(authenticationDetails, {
                 onSuccess: (cognitoUserSession)=>{
+                    this.cognitoUserSession = cognitoUserSession;
                     return resolve(cognitoUserSession);
                 },
                 onFailure: (err)=>{

@@ -6,17 +6,11 @@ import Chat from './components/Chat';
 import ChatGroup from './components/ChatGroup';
 import LoadingCircle from './components/LoadingCircle';
 
-import CognitoClient from './lib/cognito-client';
-import MQTTClient from './lib/mqtt-client';
-import PolicyManager from './lib/policy-manager';
-import APIGatewayClient from './lib/apigateway-client';
+import * as libs from './lib';
 
 class App extends Component {
     constructor() {
         super();
-        this.apigwClient = new APIGatewayClient();
-        this.cognitoClient = new CognitoClient();
-        this.inputFetchingTimer = null;
         this.state = {
             isPending: false,
             currentPage: '/signin',
@@ -56,10 +50,10 @@ class App extends Component {
 
     /* Authentication Functions */
     attachIotPolicy = (identityId)=>{
-        return new PolicyManager().attachUserIdentityToPolicy('iot-chat-policy', identityId);
+        return libs.poilcyManager.attachUserIdentityToPolicy('iot-chat-policy', identityId);
     }
     checkMessageGroup = (groupId)=>{
-        return this.apigwClient.invokeAPIGateway({
+        return libs.apigwClient.invokeAPIGateway({
                 path: '/messages/group',
                 method: 'GET',
                 queryParams: { groupId }
@@ -68,7 +62,7 @@ class App extends Component {
             .catch(()=>false);
     }
     createMessageGroup = (groupId,userName)=>{
-        return this.apigwClient.invokeAPIGateway({
+        return libs.apigwClient.invokeAPIGateway({
                 path: '/messages/group',
                 method: 'POST',
                 body: {
@@ -79,7 +73,7 @@ class App extends Component {
             });
     }
     getMessageHistory = (groupId)=>{
-        return this.apigwClient.invokeAPIGateway({
+        return libs.apigwClient.invokeAPIGateway({
                 path: '/messages',
                 method: 'GET',
                 queryParams: { groupId, startDate: '1000-01-01T00:00:00.000Z' }
@@ -90,9 +84,10 @@ class App extends Component {
     checkPreviousSessionData = async ()=>{
         try {
             // Get Credentials From Previous Session Data
-            const cognitoUserSession = await this.cognitoClient.getUserSessionFromStorage();
-            const cognitoCredentials = await this.cognitoClient.getCredentials(cognitoUserSession);
-            const userName = await this.cognitoClient.getUserName();
+            await libs.cognitoClient.setUserSessionFromStorage();
+            await libs.cognitoClient.updateCredentials();
+            const cognitoCredentials = await libs.cognitoClient.getCredentials();
+            const userName = await libs.cognitoClient.getUserName();
             // Set Pending State To Start
             await this.setPendingStart();
             // Attach IoT Principal Policy
@@ -118,10 +113,13 @@ class App extends Component {
                 currentGroup,
                 messages
             }));
+
             // Init MQTT Connection
-            this.mqttClient = new MQTTClient(cognitoCredentials, currentUser, this.appendMessage);
+            await libs.mqttClient.init(currentUser);
             // Subscribe Message Group
-            await this.mqttClient.subscribe(currentGroup);
+            await libs.mqttClient.subscribe(currentGroup);
+            libs.mqttClient.registerMessageCallback(this.appendMessage);
+
             // Move Scroll To Bottom
             this.moveMessageHistoryScollToBottom();
             // Set Pending State To Finish
@@ -136,10 +134,11 @@ class App extends Component {
             // Extract User Name
             const userName = email.split('@')[0];
             // Clear Cognito Storage
-            this.cognitoClient.clearStorage();
+            libs.cognitoClient.clearStorage();
             // Get Cognito Credentials
-            const cognitoUserSession = await this.cognitoClient.getUserSessionByAuthentication(userName, password);
-            const cognitoCredentials = await this.cognitoClient.getCredentials(cognitoUserSession);
+            await libs.cognitoClient.setUserSessionByAuthentication(userName, password);
+            await libs.cognitoClient.updateCredentials();
+            const cognitoCredentials = await libs.cognitoClient.getCredentials();
             // Set Pending State To Start
             await this.setPendingStart();
             // Attach IoT Principal Policy
@@ -165,10 +164,13 @@ class App extends Component {
                 currentGroup,
                 messages
             }));
+
             // Init MQTT Connection
-            this.mqttClient = new MQTTClient(cognitoCredentials, currentUser, this.appendMessage);
+            libs.mqttClient.init(currentUser);
             // Subscribe Message Group
-            await this.mqttClient.subscribe(currentGroup);
+            await libs.mqttClient.subscribe(currentGroup);
+            libs.mqttClient.registerMessageCallback(this.appendMessage);
+
             // Move Scroll To Bottom
             this.moveMessageHistoryScollToBottom();
             // Set Pending State To Finish
@@ -182,7 +184,7 @@ class App extends Component {
     signup = async (email, password)=>{
         try {
             // Get Cognito Credentials
-            await this.cognitoClient.registerNewAccount(email,password);
+            await libs.cognitoClient.registerNewAccount(email,password);
             // Notify Success to User
             alert('Confirmation code was sent to your email!!');
             // Go To Signin Page
@@ -199,9 +201,9 @@ class App extends Component {
         if ( !window.confirm('Signout Now?') ) {
             return;
         }
-        this.cognitoClient.signout();
-        this.cognitoClient.clearStorage();
-        this.mqttClient.disconnect();
+        libs.cognitoClient.signout();
+        libs.cognitoClient.clearStorage();
+        libs.mqttClient.disconnect();
         this.setState((prevState,props)=>({
             currentPage: '/signin',
             isAuthenticated: false,
@@ -237,13 +239,13 @@ class App extends Component {
                 content: messageBuffer,
                 userName: currentUser
             };
-            await this.apigwClient.invokeAPIGateway({
+            await libs.apigwClient.invokeAPIGateway({
                 path: '/messages',
                 method: 'POST',
                 body: messageBody
             }).catch(e=>e);
             // Send Message to MQTT
-            await this.mqttClient.publish(currentGroup, JSON.stringify(messageBody));
+            await libs.mqttClient.publish(currentGroup, JSON.stringify(messageBody));
             // Clear MessageBuffer
             this.setState((prevState,props)=>({
                 messageBuffer: ''

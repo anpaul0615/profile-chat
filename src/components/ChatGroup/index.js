@@ -3,8 +3,7 @@ import styled from "styled-components";
 import ChatGroupHeader from "./Header";
 import ChatGroupBody from "./Body";
 
-import APIGatewayClient from '../../lib/apigateway-client';
-import MQTTClient from '../../lib/mqtt-client';
+import * as libs from '../../lib';
 
 /* Style-Wrapper */
 const ChatGroupWrapper = styled.div`
@@ -17,8 +16,6 @@ class ChatGroup extends React.Component {
 
     constructor() {
         super();
-        this.apigwClient = new APIGatewayClient();
-        this.mqttClient = new MQTTClient();
         this.state = {
             chatGroups: []
         }
@@ -36,7 +33,7 @@ class ChatGroup extends React.Component {
                 isPending: true
             });
             // Get All Message History
-            const { data:messageHistory } = await this.apigwClient.invokeAPIGateway({
+            const { data:messageHistory } = await libs.apigwClient.invokeAPIGateway({
                 path: '/messages',
                 method: 'GET',
                 queryParams: { groupId: changeGroup, startDate: '1000-01-01T00:00:00.000Z' }
@@ -51,8 +48,8 @@ class ChatGroup extends React.Component {
             }));
             // Change Message Group Subscribe
             const { currentGroup } = await this.props.getGlobalState();
-            await this.mqttClient.unsubscribe(currentGroup);
-            await this.mqttClient.subscribe(changeGroup);
+            await libs.mqttClient.unsubscribe(currentGroup);
+            await libs.mqttClient.subscribe(changeGroup);
             // Update Message History & Current Chat Group
             await this.props.setGlobalState({
                 isPending: false,
@@ -70,7 +67,7 @@ class ChatGroup extends React.Component {
     initChatGroups = async ()=>{
         try {
             const { currentUser } = await this.props.getGlobalState();
-            const { data:chatGroups } = await this.apigwClient.invokeAPIGateway({
+            const { data:chatGroups } = await libs.apigwClient.invokeAPIGateway({
                 path: '/messages/group/search',
                 method: 'GET',
                 queryParams: { userName: currentUser }

@@ -1,23 +1,26 @@
 import APIGATEWAY_CONFIG from '../configs/aws.apigateway.json';
-import * as AWS from 'aws-sdk';
 import sigV4Client from './sigV4Client';
 
 export default class APIGatewayClient {
+
+    constructor(globalConfig) {
+        this.globalConfig = globalConfig;
+    }
+
     async invokeAPIGateway({ path='/', method='GET', headers={}, queryParams={}, body }) {
-        
-        if (!AWS.config.credentials) {
+        if (!this.globalConfig.credentials) {
             throw new Error('User is not logged in..!');
         }
-        if (Date.now() > AWS.config.credentials.expireTime - 60000) {
+        if (Date.now() > this.globalConfig.credentials.expireTime - 60000) {
             throw new Error('Expired-time is nearby..!');
         }
         
         const client = sigV4Client.newClient({
-            accessKey: AWS.config.credentials.accessKeyId,
-            secretKey: AWS.config.credentials.secretAccessKey,
-            sessionToken: AWS.config.credentials.sessionToken,
+            accessKey: this.globalConfig.credentials.accessKeyId,
+            secretKey: this.globalConfig.credentials.secretAccessKey,
+            sessionToken: this.globalConfig.credentials.sessionToken,
             region: APIGATEWAY_CONFIG.region,
-            endpoint: APIGATEWAY_CONFIG.endpoint,
+            endpoint: APIGATEWAY_CONFIG['profile-chat'].endpoint,
         });
         
         const signedRequest = client.signRequest({
@@ -40,7 +43,7 @@ export default class APIGatewayClient {
         if (results.status !== 200) {
             throw new Error(await results.text());
         }
-        
+
         return results.json();
     }
 }
