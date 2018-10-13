@@ -2,6 +2,7 @@ import React from 'react'
 import styled from "styled-components";
 import SignupForm from "./SignupForm";
 
+import * as libs from '../../lib';
 
 /* Style-Wrapper */
 const ChatSignupWrapper = styled.div`
@@ -15,6 +16,47 @@ const ChatSignupWrapper = styled.div`
 /* Component */
 class ChatSignup extends React.Component {
 
+    attachIotPolicy = (identityId)=>{
+        return libs.poilcyManager.attachUserIdentityToPolicy('iot-chat-policy', identityId);
+    }
+    checkMessageGroup = (groupId)=>{
+        return libs.apigwClient.invokeAPIGateway({
+                path: '/messages/group',
+                method: 'GET',
+                queryParams: { groupId }
+            })
+            .then(()=>true)
+            .catch(()=>false);
+    }
+    createMessageGroup = (groupId,userName)=>{
+        return libs.apigwClient.invokeAPIGateway({
+                path: '/messages/group',
+                method: 'POST',
+                body: {
+                    groupId,
+                    groupName: userName,
+                    groupUsers: [ userName, 'anpaul0615' ]
+                }
+            });
+    }
+
+
+    handleSignup = async (email, password)=>{
+        try {
+            // Get Cognito Credentials
+            await libs.cognitoClient.registerNewAccount(email,password);
+            // Notify Success to User
+            alert('Confirmation code was sent to your email!!');
+            // Go To Signin Page
+            await this.props.setGlobalState({
+                currentPage: '/signin'
+            });
+
+        } catch (e) {
+            console.log(e);
+            alert(e.message || e);
+        }
+    }
     handleInputEmail = (event)=>{
         const email = event.target.value;
         this.setState((prevState,props)=>({
@@ -48,6 +90,7 @@ class ChatSignup extends React.Component {
             currentPage: '/signin'
         });
     }
+
 
     render() {
         return (
