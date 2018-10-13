@@ -1,45 +1,49 @@
 import React from 'react';
-import Message from "./Message";
-import styled from "styled-components";
-
+import PropTypes from 'prop-types';
+import styled from 'styled-components';
+import Message from './Message';
 
 /* Style-Wrapper */
 const MessageHistoryWrapper = styled.div`
-    width: 100%;
-    height: calc(100% - 80px);
-    padding: 12px 0px;
-    overflow-x: hidden;
-    overflow-y: auto;
-    -webkit-overflow-scrolling: touch;
-    background-color: #FFFFFF;
-    box-sizing: content-box;
-    -webkit-box-sizing: content-box;
+  width: 100%;
+  height: calc(100% - 80px);
+  padding: 12px 0px;
+  overflow-x: hidden;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  background-color: #FFFFFF;
+  box-sizing: content-box;
+  -webkit-box-sizing: content-box;
 `;
 const ScrollWrapper = styled.div`
-    height: auto;
+  height: auto;
 `;
 /* Component */
-const MessageHistory = (props)=>{
-    const { messages, initMessageHistoryScoll } = props;
-    return(
-        <MessageHistoryWrapper>
-            <ScrollWrapper innerRef={el=>initMessageHistoryScoll(el)} >
-            {
-                messages
-                    ?
-                    messages.map((e,idx)=>
-                        <Message
-                            key={`msg-${idx}`}
-                            isMine={e.isMine}
-                            userName={e.userName}
-                            content={e.content}
-                            regDate={e.regDate} />
-                    )
-                    :
-                    'no-data'
-            }
-            </ScrollWrapper>
-        </MessageHistoryWrapper>
-    );
+const MessageHistory = (props) => {
+  const { messages, initMessageHistoryScoll } = props;
+  return (
+    <MessageHistoryWrapper>
+      <ScrollWrapper innerRef={el => initMessageHistoryScoll(el)}>
+        {
+          messages
+            ? messages.map((e, idx) => (
+              <Message
+                key={(i => `msg-${i}`)(idx)}
+                isMine={e.isMine}
+                userName={e.userName}
+                content={e.content}
+                regDate={e.regDate}
+              />))
+            : 'no-data'
+        }
+      </ScrollWrapper>
+    </MessageHistoryWrapper>
+  );
 };
+
+MessageHistory.propTypes = {
+  messages: PropTypes.arrayOf(PropTypes.object).isRequired,
+  initMessageHistoryScoll: PropTypes.func.isRequired,
+};
+
 export default MessageHistory;
