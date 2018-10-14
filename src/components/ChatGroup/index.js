@@ -55,28 +55,13 @@ class ChatGroup extends React.Component {
       await this.setGlobalState({
         isPending: true,
       });
-      // Get All Message History
-      const { data: messageHistory } = await libs.apigwClient.invokeAPIGateway({
-        path: '/messages',
-        method: 'GET',
-        queryParams: { groupId: changeGroup, startDate: '1000-01-01T00:00:00.000Z' },
-      });
-      // Parse Message History
-      const { currentUser } = await this.getGlobalState();
-      const messages = (messageHistory || []).map(e => ({
-        isMine: e.userName === currentUser,
-        userName: e.userName,
-        content: e.content,
-        regDate: e.regDate,
-      }));
       // Change Message Group Subscribe
       const { currentGroup } = await this.getGlobalState();
       await libs.mqttClient.unsubscribe(currentGroup);
       await libs.mqttClient.subscribe(changeGroup);
-      // Update Message History & Current Chat Group
+      // Update Current Chat Group
       await this.setGlobalState({
         isPending: false,
-        messages,
         currentGroup: changeGroup,
       });
       // Exit Chat Group Page
