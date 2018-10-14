@@ -14,13 +14,14 @@ const ChatBodyWrapper = styled.div`
 const ChatBody = (props) => {
   const {
     messages, messageBuffer,
-    handleInputMessage, handleSendMessage, initMessageHistoryScoll,
+    handleInputMessage, handleSendMessage, handleGetOlderMessages, initMessageHistoryScoll,
   } = props;
   return (
     <ChatBodyWrapper>
       <MessageHistory
         messages={messages}
         initMessageHistoryScoll={initMessageHistoryScoll}
+        handleGetOlderMessages={handleGetOlderMessages}
       />
       <MessageInputBox
         messageBuffer={messageBuffer}
@@ -37,6 +38,7 @@ ChatBody.propTypes = {
   handleInputMessage: PropTypes.func.isRequired,
   handleSendMessage: PropTypes.func.isRequired,
   initMessageHistoryScoll: PropTypes.func.isRequired,
+  handleGetOlderMessages: PropTypes.func.isRequired,
 };
 
 export default ChatBody;

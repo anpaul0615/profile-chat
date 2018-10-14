@@ -2,6 +2,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import styled from 'styled-components';
 import Message from './Message';
+import MoreButton from './MoreButton';
 
 /* Style-Wrapper */
 const MessageHistoryWrapper = styled.div`
@@ -20,10 +21,11 @@ const ScrollWrapper = styled.div`
 `;
 /* Component */
 const MessageHistory = (props) => {
-  const { messages, initMessageHistoryScoll } = props;
+  const { messages, handleGetOlderMessages, initMessageHistoryScoll } = props;
   return (
     <MessageHistoryWrapper>
       <ScrollWrapper innerRef={el => initMessageHistoryScoll(el)}>
+        <MoreButton handleGetOlderMessages={handleGetOlderMessages} />
         {
           messages
             ? messages.map((e, idx) => (
@@ -44,6 +46,7 @@ const MessageHistory = (props) => {
 MessageHistory.propTypes = {
   messages: PropTypes.arrayOf(PropTypes.object).isRequired,
   initMessageHistoryScoll: PropTypes.func.isRequired,
+  handleGetOlderMessages: PropTypes.func.isRequired,
 };
 
 export default MessageHistory;

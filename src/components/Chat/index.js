@@ -45,15 +45,20 @@ class Chat extends React.Component {
       const messageHistory = await libs.apigwClient.invokeAPIGateway({
         path: '/messages',
         method: 'GET',
-        queryParams: { groupId: currentGroup, startDate: '1000-01-01T00:00:00.000Z' },
+        queryParams: {
+          groupId: currentGroup,
+          startDate: '1000-01-01T00:00:00.000Z',
+          endtDate: new Date().toISOString(),
+          limit: 50,
+        },
       }).then(result => result.data).catch(() => []);
       // Parse Message History
-      const messages = (messageHistory || []).map(e => ({
+      const messages = messageHistory.map(e => ({
         isMine: e.userName === currentUser,
         userName: e.userName,
         content: e.content,
         regDate: e.regDate,
-      }));
+      })).reverse();
       this.setState(() => ({
         messages,
       }));
@@ -179,6 +184,49 @@ class Chat extends React.Component {
     });
   }
 
+  handleGetOlderMessages = async () => {
+    const { messages } = this.state;
+    if (messages.length !== 0) {
+      try {
+        // Set Pending State To Start
+        await this.setGlobalState({
+          isPending: true,
+        });
+        // Get Older Message History
+        const lastMessage = messages[0];
+        const lastMessageTime = new Date(lastMessage.regDate).getTime() - 1;
+        const { currentGroup, currentUser } = await this.getGlobalState();
+        const messageHistory = await libs.apigwClient.invokeAPIGateway({
+          path: '/messages',
+          method: 'GET',
+          queryParams: {
+            groupId: currentGroup,
+            startDate: '1000-01-01T00:00:00.000Z',
+            endDate: new Date(lastMessageTime).toISOString(),
+            limit: 50,
+          },
+        }).then(result => result.data).catch(() => []);
+        // Parse Message History
+        const olderMessages = (messageHistory || []).map(e => ({
+          isMine: e.userName === currentUser,
+          userName: e.userName,
+          content: e.content,
+          regDate: e.regDate,
+        })).reverse();
+        // Update Messages
+        this.setState(prevState => ({
+          messages: [...olderMessages, ...prevState.messages],
+        }));
+        // Set Pending State To Finish
+        await this.setGlobalState({
+          isPending: false,
+        });
+      } catch (e) {
+        // console.log(e);
+      }
+    }
+  }
+
   render() {
     const { messageBuffer, messages } = this.state;
     return (
@@ -191,6 +239,7 @@ class Chat extends React.Component {
           messages={messages}
           messageBuffer={messageBuffer}
           initMessageHistoryScoll={this.initMessageHistoryScoll}
+          handleGetOlderMessages={this.handleGetOlderMessages}
           handleInputMessage={this.handleInputMessage}
           handleSendMessage={this.handleSendMessage}
         />
