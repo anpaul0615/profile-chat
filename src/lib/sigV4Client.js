@@ -70,21 +70,21 @@ sigV4Client.newClient = (config) => {
   function buildCanonicalSignedHeaders(headers) {
     const sortedKeys = [];
     Object.keys(headers).forEach((key) => {
-      sortedKeys.push(headers[key].toLowerCase());
+      sortedKeys.push(key.toLowerCase());
     });
     sortedKeys.sort();
     return sortedKeys.join(';');
   }
 
   function buildCanonicalRequest(method, path, queryParams, headers, payload) {
-    return (
-      `${method}
-      ${buildCanonicalUri(path)}
-      ${buildCanonicalQueryString(queryParams)}
-      ${buildCanonicalHeaders(headers)}
-      ${buildCanonicalSignedHeaders(headers)}
-      ${hexEncode(hash(payload))}`
-    );
+    return [
+      method,
+      buildCanonicalUri(path),
+      buildCanonicalQueryString(queryParams),
+      buildCanonicalHeaders(headers),
+      buildCanonicalSignedHeaders(headers),
+      hexEncode(hash(payload)),
+    ].join('\n');
   }
 
   function hashCanonicalRequest(request) {
