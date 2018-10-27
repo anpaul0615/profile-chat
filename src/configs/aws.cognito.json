@@ -1,5 +1,6 @@
 {
   "region": "ap-northeast-2",
+  "endpoint": "cognito-idp.ap-northeast-2.amazonaws.com",
   "IdentityPoolId": "ap-northeast-2:51823c02-5f74-4f03-9550-7a754236e84b",
   "UserPoolId": "ap-northeast-2_0sCAcMhaV",
   "ClientId": "1rok05motv90p32ao13f5tl2na"
