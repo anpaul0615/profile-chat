@@ -117,9 +117,9 @@ class Chat extends React.Component {
     }
   }
 
-  handleRecievedMessage = (messageChunk) => {
+  handleRecievedMessage = async (messageChunk) => {
     const newMessage = JSON.parse(messageChunk);
-    const { currentUser } = this.state;
+    const { currentUser } = await this.getGlobalState();
     newMessage.isMine = (newMessage.userName === currentUser);
     this.setState(prevState => ({
       messages: [...prevState.messages, newMessage],
