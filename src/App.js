@@ -11,6 +11,7 @@ class App extends Component {
     super();
     this.state = {
       isPending: false,
+      currentUser: undefined,
       currentPage: '/signin',
     };
   }

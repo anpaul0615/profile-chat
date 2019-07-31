@@ -2,6 +2,6 @@
     "region": "ap-northeast-2",
     "endpoint": "iot.ap-northeast-2.amazonaws.com",
     "profile-chat": {
-        "endpoint": "aodom5ybr70o3.iot.ap-northeast-2.amazonaws.com"
+        "endpoint": "aodom5ybr70o3-ats.iot.ap-northeast-2.amazonaws.com"
     }
 }
